@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MOBIXA — Inventory & Stock Management</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+        }
+
+        body {
+            background: #090d1a;
+            color: #f1f5f9;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 250px;
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            background: #101528;
+            border-right: 1px solid rgba(255,255,255,0.06);
+            padding: 25px 15px;
+            z-index: 100;
+            overflow-y: auto;
+        }
+
+        .logo {
+            text-align: center;
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 4px;
+            letter-spacing: 1px;
+        }
+
+        .logo span {
+            color: #8b5cf6;
+        }
+
+        .tagline {
+            text-align: center;
+            font-size: 10px;
+            color: #94a3b8;
+            letter-spacing: 1.5px;
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+
+        .menu-title {
+            font-size: 11px;
+            color: #64748b;
+            margin: 18px 10px 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 700;
+        }
+
+        .menu a {
+            display: flex;
+            align-items: center;
+            gap: 13px;
+            padding: 11px 15px;
+            margin-bottom: 5px;
+            border-radius: 10px;
+            color: #cbd5e1;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: 0.25s;
+        }
+
+        .menu a:hover {
+            background: rgba(99,102,241,0.12);
+            color: white;
+        }
+
+        .menu a.active {
+            background: linear-gradient(90deg, #6366f1, #8b5cf6);
+            color: white;
+            box-shadow: 0 4px 15px rgba(99,102,241,0.3);
+        }
+
+        .menu-icon {
+            width: 22px;
+            text-align: center;
+            font-size: 17px;
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding: 25px 35px;
+            min-height: 100vh;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .page-title h1 {
+            font-size: 26px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .page-title p {
+            color: #94a3b8;
+            font-size: 14px;
+        }
+
+        .top-btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn-stockin {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(16,185,129,0.25);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-adjust {
+            background: #1e2642;
+            border: 1px solid rgba(255,255,255,0.1);
+            color: white;
+            padding: 10px 18px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-history {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(99,102,241,0.25);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* METRICS */
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 25px;
+        }
+
+        .summary-card {
+            background: #141a30;
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 14px;
+            padding: 18px 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .card-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .card-info h3 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+
+        .card-info p {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+        /* CONTROLS */
+        .controls-card {
+            background: #141a30;
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 14px;
+            padding: 16px 20px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .search-box {
+            position: relative;
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .search-box input {
+            width: 100%;
+            background: #0f1426;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px;
+            padding: 10px 15px 10px 38px;
+            color: white;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #64748b;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        select {
+            background: #0f1426;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px;
+            padding: 10px 14px;
+            color: white;
+            font-size: 13px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        /* TABLE */
+        .table-card {
+            background: #141a30;
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        th {
+            background: #11162a;
+            text-align: left;
+            padding: 14px 16px;
+            color: #94a3b8;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+
+        td {
+            padding: 15px 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            color: #e2e8f0;
+        }
+
+        tr:hover td {
+            background: rgba(255,255,255,0.02);
+        }
+
+        .category-badge {
+            background: rgba(99,102,241,0.15);
+            color: #a5b4fc;
+            padding: 4px 9px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .status {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .status.in {
+            background: rgba(16,185,129,0.15);
+            color: #34d399;
+        }
+
+        .status.low {
+            background: rgba(245,158,11,0.15);
+            color: #fbbf24;
+        }
+
+        .status.out {
+            background: rgba(239,68,68,0.15);
+            color: #f87171;
+        }
+
+        .badge {
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .badge.in { background: rgba(16,185,129,0.2); color:#34d399; }
+        .badge.sale { background: rgba(239,68,68,0.2); color:#f87171; }
+        .badge.adjustment { background: rgba(245,158,11,0.2); color:#fbbf24; }
+        .badge.return { background: rgba(99,102,241,0.2); color:#a5b4fc; }
+
+        .action-btn {
+            background: #1e2642;
+            border: 1px solid rgba(255,255,255,0.08);
+            color: white;
+            padding: 6px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: 0.2s;
+        }
+
+        .action-btn:hover {
+            background: #2a355c;
+        }
+
+        /* MODAL */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.75);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #13192f;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 18px;
+            width: 100%;
+            max-width: 550px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 28px;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.6);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h2 {
+            font-size: 19px;
+            font-weight: 700;
+        }
+
+        .close-btn {
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            font-size: 22px;
+            cursor: pointer;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            color: #94a3b8;
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            background: #0b0f1d;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 10px 12px;
+            color: white;
+            font-size: 13px;
+            outline: none;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .btn-cancel {
+            background: #1e2642;
+            border: none;
+            color: #cbd5e1;
+            padding: 10px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, #10b981, #059669);
+            border: none;
+            color: white;
+            padding: 10px 22px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        @media (max-width: 800px) {
+            .sidebar {
+                width: 70px;
+                padding: 15px 8px;
+            }
+            .sidebar .tagline, .sidebar .menu-title, .sidebar .menu a span:not(.menu-icon) {
+                display: none;
+            }
+            .main-content {
+                margin-left: 70px;
+                padding: 20px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<aside class="sidebar">
+    <div class="logo">
+        Mobi<span>xa</span>
+    </div>
+    <div class="tagline">
+        SMART • SIMPLE • POWERFUL
+    </div>
+
+    <div class="menu-title">Main Menu</div>
+    <div class="menu">
+        <a href="dashboard.html">
+            <span class="menu-icon">📊</span>
+            <span>Dashboard</span>
+        </a>
+        <a href="products.html">
+            <span class="menu-icon">📱</span>
+            <span>Products</span>
+        </a>
+        <a href="inventory.html" class="active">
+            <span class="menu-icon">📦</span>
+            <span>Inventory</span>
+        </a>
+        <a href="sales.html">
+            <span class="menu-icon">💰</span>
+            <span>Sales & Billing</span>
+        </a>
+        <a href="customer.html">
+            <span class="menu-icon">👥</span>
+            <span>Customers</span>
+        </a>
+        <a href="employees.html">
+            <span class="menu-icon">👨‍💼</span>
+            <span>Employees</span>
+        </a>
+        <a href="attendance.html">
+            <span class="menu-icon">⏱️</span>
+            <span>Attendance</span>
+        </a>
+        <a href="reports.html">
+            <span class="menu-icon">📈</span>
+            <span>Reports</span>
+        </a>
+    </div>
+
+    <div class="menu-title">Settings</div>
+    <div class="menu">
+        <a href="settings.html">
+            <span class="menu-icon">⚙️</span>
+            <span>Settings</span>
+        </a>
+        <a href="javascript:void(0)" onclick="logout()">
+            <span class="menu-icon">🚪</span>
+            <span>Logout</span>
+        </a>
+    </div>
+</aside>
+
+<main class="main-content">
+    <div class="topbar">
+        <div class="page-title">
+            <h1>Inventory & Stock Control</h1>
+            <p>Track current unit balances, record stock shipments, and review audit history.</p>
+        </div>
+        <div class="top-btn-group">
+            <button class="btn-stockin" onclick="openStockInModal()">
+                <span>📥</span> Stock In
+            </button>
+            <button class="btn-adjust" onclick="openAdjustModal()">
+                <span>⚖️</span> Stock Adjustment
+            </button>
+            <button class="btn-history" onclick="viewMovementsHistory()">
+                <span>📋</span> Movement History
+            </button>
+        </div>
+    </div>
+
+    <!-- METRICS -->
+    <div class="summary-cards">
+        <div class="summary-card">
+            <div class="card-icon" style="background:rgba(99,102,241,0.15); color:#818cf8;">📦</div>
+            <div class="card-info">
+                <h3 id="totalUnitsDisplay">0</h3>
+                <p>Total Stocked Units</p>
+            </div>
+        </div>
+
+        <div class="summary-card">
+            <div class="card-icon" style="background:rgba(16,185,129,0.15); color:#10b981;">📱</div>
+            <div class="card-info">
+                <h3 id="totalProductsDisplay">0</h3>
+                <p>Distinct Product Lines</p>
+            </div>
+        </div>
+
+        <div class="summary-card">
+            <div class="card-icon" style="background:rgba(245,158,11,0.15); color:#f59e0b;">⚠️</div>
+            <div class="card-info">
+                <h3 id="lowStockDisplay">0</h3>
+                <p>Low Stock Items</p>
+            </div>
+        </div>
+
+        <div class="summary-card">
+            <div class="card-icon" style="background:rgba(239,68,68,0.15); color:#ef4444;">✕</div>
+            <div class="card-info">
+                <h3 id="outOfStockDisplay">0</h3>
+                <p>Out of Stock Items</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONTROLS -->
+    <div class="controls-card">
+        <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="searchInput" placeholder="Search product name, brand, SKU...">
+        </div>
+
+        <div class="filter-group">
+            <select id="categoryFilter">
+                <option value="all">All Categories</option>
+                <option value="Smartphones">Smartphones</option>
+                <option value="Accessories">Accessories</option>
+                <option value="Tablets">Tablets</option>
+                <option value="Wearables">Wearables</option>
+                <option value="Other">Other</option>
+            </select>
+
+            <select id="statusFilter">
+                <option value="all">All Stock Levels</option>
+                <option value="in">In Stock Only</option>
+                <option value="low">Low Stock Alerts</option>
+                <option value="out">Out of Stock</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-card">
+        <div style="overflow-x:auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>SKU</th>
+                        <th>Category</th>
+                        <th>Available Stock</th>
+                        <th>Min Stock Threshold</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="inventoryTableBody">
+                    <tr><td colspan="7" style="text-align:center; padding:30px; color:#94a3b8;">Loading inventory data...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+<!-- STOCK IN MODAL -->
+<div class="modal" id="stockInModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Receive Stock (Stock-In)</h2>
+            <button class="close-btn" onclick="closeStockInModal()">×</button>
+        </div>
+
+        <form id="stockInForm">
+            <div class="form-group">
+                <label>Select Product *</label>
+                <select id="stockInProduct" required>
+                    <option value="">-- Choose Product --</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Quantity to Add *</label>
+                <input type="number" id="stockInQty" min="1" placeholder="e.g. 10" required>
+            </div>
+
+            <div class="form-group">
+                <label>Supplier / Invoice Ref</label>
+                <input type="text" id="stockInRef" placeholder="e.g. PO-8921">
+            </div>
+
+            <div class="form-group">
+                <label>Reason / Notes</label>
+                <input type="text" id="stockInReason" placeholder="e.g. Supplier delivery consignment">
+            </div>
+
+            <div class="form-group">
+                <label>Serialized IMEI Numbers (Comma-separated for phones)</label>
+                <input type="text" id="stockInImeis" placeholder="358920192837451, 358920192837452">
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-cancel" onclick="closeStockInModal()">Cancel</button>
+                <button type="submit" class="btn-submit">Confirm Stock-In</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ADJUST MODAL -->
+<div class="modal" id="adjustModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Inventory Adjustment (Audit)</h2>
+            <button class="close-btn" onclick="closeAdjustModal()">×</button>
+        </div>
+
+        <form id="adjustForm">
+            <div class="form-group">
+                <label>Select Product *</label>
+                <select id="adjustProduct" onchange="onAdjustProductSelect()" required>
+                    <option value="">-- Choose Product --</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Current Recorded Stock: <span id="adjustCurrentStock" style="color:#6366f1; font-weight:bold;">-</span></label>
+                <label style="margin-top:8px;">New Verified Stock Count *</label>
+                <input type="number" id="adjustNewQty" min="0" placeholder="e.g. 8" required>
+            </div>
+
+            <div class="form-group">
+                <label>Audit Reason (Required) *</label>
+                <input type="text" id="adjustReason" placeholder="e.g. Physical inventory count discrepancy" required>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-cancel" onclick="closeAdjustModal()">Cancel</button>
+                <button type="submit" class="btn-submit" style="background:#6366f1;">Save Adjustment</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MOVEMENTS HISTORY MODAL -->
+<div class="modal" id="movementsModal">
+    <div class="modal-content" style="max-width:850px;">
+        <div class="modal-header">
+            <h2>Stock Movements & Audit Log</h2>
+            <button class="close-btn" onclick="closeMovementsModal()">×</button>
+        </div>
+
+        <div style="overflow-x:auto; max-height:60vh;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Product</th>
+                        <th>Type</th>
+                        <th>Qty Delta</th>
+                        <th>Stock Transition</th>
+                        <th>Reason / Reference</th>
+                    </tr>
+                </thead>
+                <tbody id="movementsTableBody">
+                    <tr><td colspan="6" style="text-align:center; padding:20px;">Loading movements...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="modal-footer">
+            <button type="button" class="btn-cancel" onclick="closeMovementsModal()">Close</button>
+        </div>
+    </div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/inventory.js"></script>
+</body>
+</html>

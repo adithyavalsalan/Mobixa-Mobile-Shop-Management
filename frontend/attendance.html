@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MOBIXA — Attendance & Time Tracking</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+        }
+
+        body {
+            background: #090d1a;
+            color: #f1f5f9;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 250px;
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            background: #101528;
+            border-right: 1px solid rgba(255,255,255,0.06);
+            padding: 25px 15px;
+            z-index: 100;
+            overflow-y: auto;
+        }
+
+        .logo {
+            text-align: center;
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 4px;
+            letter-spacing: 1px;
+        }
+
+        .logo span {
+            color: #8b5cf6;
+        }
+
+        .tagline {
+            text-align: center;
+            font-size: 10px;
+            color: #94a3b8;
+            letter-spacing: 1.5px;
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+
+        .menu-title {
+            font-size: 11px;
+            color: #64748b;
+            margin: 18px 10px 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 700;
+        }
+
+        .menu a {
+            display: flex;
+            align-items: center;
+            gap: 13px;
+            padding: 11px 15px;
+            margin-bottom: 5px;
+            border-radius: 10px;
+            color: #cbd5e1;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: 0.25s;
+        }
+
+        .menu a:hover {
+            background: rgba(99,102,241,0.12);
+            color: white;
+        }
+
+        .menu a.active {
+            background: linear-gradient(90deg, #6366f1, #8b5cf6);
+            color: white;
+            box-shadow: 0 4px 15px rgba(99,102,241,0.3);
+        }
+
+        .menu-icon {
+            width: 22px;
+            text-align: center;
+            font-size: 17px;
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding: 25px 35px;
+            min-height: 100vh;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .page-title h1 {
+            font-size: 26px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .page-title p {
+            color: #94a3b8;
+            font-size: 14px;
+        }
+
+        .today-card {
+            background: linear-gradient(135deg, #141a30, #182245);
+            border: 1px solid rgba(99,102,241,0.2);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .time-box {
+            display: flex;
+            gap: 25px;
+            margin-top: 10px;
+        }
+
+        .time-item {
+            background: #0b0f1d;
+            padding: 10px 16px;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .time-item span {
+            font-size: 11px;
+            color: #94a3b8;
+            display: block;
+        }
+
+        .time-item strong {
+            font-size: 18px;
+            color: white;
+            font-family: monospace;
+        }
+
+        .btn-in {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(16,185,129,0.3);
+            transition: 0.2s;
+        }
+
+        .btn-in:hover:not(:disabled) {
+            background: #059669;
+        }
+
+        .btn-out {
+            background: #f59e0b;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(245,158,11,0.3);
+            transition: 0.2s;
+            margin-left: 10px;
+        }
+
+        .btn-out:hover:not(:disabled) {
+            background: #d97706;
+        }
+
+        button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .card {
+            background: #141a30;
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 22px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .card-header h2 {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        th {
+            background: #11162a;
+            text-align: left;
+            padding: 12px 14px;
+            color: #94a3b8;
+            font-size: 12px;
+            text-transform: uppercase;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+
+        td {
+            padding: 14px;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            color: #e2e8f0;
+        }
+
+        .status {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .status.completed {
+            background: rgba(16,185,129,0.15);
+            color: #34d399;
+        }
+
+        .status.cancelled {
+            background: rgba(239,68,68,0.15);
+            color: #f87171;
+        }
+
+        @media (max-width: 800px) {
+            .sidebar {
+                width: 70px;
+                padding: 15px 8px;
+            }
+            .sidebar .tagline, .sidebar .menu-title, .sidebar .menu a span:not(.menu-icon) {
+                display: none;
+            }
+            .main-content {
+                margin-left: 70px;
+                padding: 20px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<aside class="sidebar">
+    <div class="logo">
+        Mobi<span>xa</span>
+    </div>
+    <div class="tagline">
+        SMART • SIMPLE • POWERFUL
+    </div>
+
+    <div class="menu-title">Main Menu</div>
+    <div class="menu">
+        <a href="dashboard.html">
+            <span class="menu-icon">📊</span>
+            <span>Dashboard</span>
+        </a>
+        <a href="products.html">
+            <span class="menu-icon">📱</span>
+            <span>Products</span>
+        </a>
+        <a href="inventory.html">
+            <span class="menu-icon">📦</span>
+            <span>Inventory</span>
+        </a>
+        <a href="sales.html">
+            <span class="menu-icon">💰</span>
+            <span>Sales & Billing</span>
+        </a>
+        <a href="customer.html">
+            <span class="menu-icon">👥</span>
+            <span>Customers</span>
+        </a>
+        <a href="employees.html">
+            <span class="menu-icon">👨‍💼</span>
+            <span>Employees</span>
+        </a>
+        <a href="attendance.html" class="active">
+            <span class="menu-icon">⏱️</span>
+            <span>Attendance</span>
+        </a>
+        <a href="reports.html">
+            <span class="menu-icon">📈</span>
+            <span>Reports</span>
+        </a>
+    </div>
+
+    <div class="menu-title">Settings</div>
+    <div class="menu">
+        <a href="settings.html">
+            <span class="menu-icon">⚙️</span>
+            <span>Settings</span>
+        </a>
+        <a href="javascript:void(0)" onclick="logout()">
+            <span class="menu-icon">🚪</span>
+            <span>Logout</span>
+        </a>
+    </div>
+</aside>
+
+<main class="main-content">
+    <div class="topbar">
+        <div class="page-title">
+            <h1>Attendance & Shift Clock</h1>
+            <p>Clock in/out records with server-verified timestamps.</p>
+        </div>
+    </div>
+
+    <!-- TODAY'S CLOCK IN/OUT BANNER -->
+    <div class="today-card">
+        <div>
+            <div style="font-size:12px; color:#94a3b8; font-weight:600; text-transform:uppercase; letter-spacing:1px;">Today's Session</div>
+            <div id="todayStatusBadge" style="margin-top:4px;">
+                <span class="status cancelled">Checking...</span>
+            </div>
+
+            <div class="time-box">
+                <div class="time-item">
+                    <span>CHECK-IN TIME</span>
+                    <strong id="todayCheckInTime">--:--</strong>
+                </div>
+                <div class="time-item">
+                    <span>CHECK-OUT TIME</span>
+                    <strong id="todayCheckOutTime">--:--</strong>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <button id="btnCheckIn" class="btn-in" onclick="doCheckIn()">⏱️ Check In</button>
+            <button id="btnCheckOut" class="btn-out" onclick="doCheckOut()">🚪 Check Out</button>
+        </div>
+    </div>
+
+    <!-- MY ATTENDANCE HISTORY -->
+    <div class="card">
+        <div class="card-header">
+            <h2>My Recent Attendance History</h2>
+        </div>
+        <div style="overflow-x:auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Check-In</th>
+                        <th>Check-Out</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="myAttendanceBody">
+                    <tr><td colspan="4" style="text-align:center; padding:20px;">Loading history...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ADMIN: ALL STAFF ATTENDANCE -->
+    <div class="card" id="adminAttendanceSection" style="display:none;">
+        <div class="card-header">
+            <h2>All Staff Attendance (Admin View)</h2>
+            <div style="display:flex; gap:10px; align-items:center;">
+                <input type="date" id="adminAttendanceDate" style="background:#0b0f1d; border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:6px 10px; color:white;" onchange="loadAllAttendance()">
+                <button class="action-btn" onclick="loadAllAttendance()">Refresh</button>
+            </div>
+        </div>
+        <div style="overflow-x:auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Staff Member</th>
+                        <th>Role / Designation</th>
+                        <th>Date</th>
+                        <th>Check-In</th>
+                        <th>Check-Out</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="allAttendanceBody">
+                    <tr><td colspan="6" style="text-align:center; padding:20px;">Loading staff records...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+<script src="js/api.js"></script>
+<script src="js/attendance.js"></script>
+</body>
+</html>

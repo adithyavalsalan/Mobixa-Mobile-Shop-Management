@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MOBIXA — Customer Profiles</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+        }
+
+        body {
+            background: #090d1a;
+            color: #f1f5f9;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 250px;
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            background: #101528;
+            border-right: 1px solid rgba(255,255,255,0.06);
+            padding: 25px 15px;
+            z-index: 100;
+            overflow-y: auto;
+        }
+
+        .logo {
+            text-align: center;
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 4px;
+            letter-spacing: 1px;
+        }
+
+        .logo span {
+            color: #8b5cf6;
+        }
+
+        .tagline {
+            text-align: center;
+            font-size: 10px;
+            color: #94a3b8;
+            letter-spacing: 1.5px;
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+
+        .menu-title {
+            font-size: 11px;
+            color: #64748b;
+            margin: 18px 10px 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 700;
+        }
+
+        .menu a {
+            display: flex;
+            align-items: center;
+            gap: 13px;
+            padding: 11px 15px;
+            margin-bottom: 5px;
+            border-radius: 10px;
+            color: #cbd5e1;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: 0.25s;
+        }
+
+        .menu a:hover {
+            background: rgba(99,102,241,0.12);
+            color: white;
+        }
+
+        .menu a.active {
+            background: linear-gradient(90deg, #6366f1, #8b5cf6);
+            color: white;
+            box-shadow: 0 4px 15px rgba(99,102,241,0.3);
+        }
+
+        .menu-icon {
+            width: 22px;
+            text-align: center;
+            font-size: 17px;
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding: 25px 35px;
+            min-height: 100vh;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .page-title h1 {
+            font-size: 26px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .page-title p {
+            color: #94a3b8;
+            font-size: 14px;
+        }
+
+        .btn-add {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            border: none;
+            padding: 11px 20px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(99,102,241,0.3);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: 0.25s;
+        }
+
+        .btn-add:hover {
+            transform: translateY(-2px);
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 25px;
+        }
+
+        .summary-card {
+            background: #141a30;
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 14px;
+            padding: 18px 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .card-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .card-info h3 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+
+        .card-info p {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+        .controls-card {
+            background: #141a30;
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 14px;
+            padding: 16px 20px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+        }
+
+        .search-box {
+            position: relative;
+            flex: 1;
+        }
+
+        .search-box input {
+            width: 100%;
+            background: #0f1426;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px;
+            padding: 10px 15px 10px 38px;
+            color: white;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #64748b;
+        }
+
+        .table-card {
+            background: #141a30;
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        th {
+            background: #11162a;
+            text-align: left;
+            padding: 14px 16px;
+            color: #94a3b8;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+
+        td {
+            padding: 15px 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            color: #e2e8f0;
+        }
+
+        tr:hover td {
+            background: rgba(255,255,255,0.02);
+        }
+
+        .action-btn {
+            background: #1e2642;
+            border: 1px solid rgba(255,255,255,0.08);
+            color: white;
+            padding: 6px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: 0.2s;
+        }
+
+        .action-btn:hover {
+            background: #2a355c;
+        }
+
+        .action-btn.delete-btn:hover {
+            background: rgba(239,68,68,0.2);
+            border-color: #ef4444;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.75);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #13192f;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 18px;
+            width: 100%;
+            max-width: 550px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 28px;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.6);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h2 {
+            font-size: 19px;
+            font-weight: 700;
+        }
+
+        .close-btn {
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            font-size: 22px;
+            cursor: pointer;
+        }
+
+        .form-group {
+            margin-bottom: 14px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            color: #94a3b8;
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        .form-group input, .form-group textarea {
+            width: 100%;
+            background: #0b0f1d;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 10px 12px;
+            color: white;
+            font-size: 13px;
+            outline: none;
+        }
+
+        .form-group input:focus, .form-group textarea:focus {
+            border-color: #6366f1;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .btn-cancel {
+            background: #1e2642;
+            border: none;
+            color: #cbd5e1;
+            padding: 10px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            border: none;
+            color: white;
+            padding: 10px 22px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        @media (max-width: 800px) {
+            .sidebar {
+                width: 70px;
+                padding: 15px 8px;
+            }
+            .sidebar .tagline, .sidebar .menu-title, .sidebar .menu a span:not(.menu-icon) {
+                display: none;
+            }
+            .main-content {
+                margin-left: 70px;
+                padding: 20px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<aside class="sidebar">
+    <div class="logo">
+        Mobi<span>xa</span>
+    </div>
+    <div class="tagline">
+        SMART • SIMPLE • POWERFUL
+    </div>
+
+    <div class="menu-title">Main Menu</div>
+    <div class="menu">
+        <a href="dashboard.html">
+            <span class="menu-icon">📊</span>
+            <span>Dashboard</span>
+        </a>
+        <a href="products.html">
+            <span class="menu-icon">📱</span>
+            <span>Products</span>
+        </a>
+        <a href="inventory.html">
+            <span class="menu-icon">📦</span>
+            <span>Inventory</span>
+        </a>
+        <a href="sales.html">
+            <span class="menu-icon">💰</span>
+            <span>Sales & Billing</span>
+        </a>
+        <a href="customer.html" class="active">
+            <span class="menu-icon">👥</span>
+            <span>Customers</span>
+        </a>
+        <a href="employees.html">
+            <span class="menu-icon">👨‍💼</span>
+            <span>Employees</span>
+        </a>
+        <a href="attendance.html">
+            <span class="menu-icon">⏱️</span>
+            <span>Attendance</span>
+        </a>
+        <a href="reports.html">
+            <span class="menu-icon">📈</span>
+            <span>Reports</span>
+        </a>
+    </div>
+
+    <div class="menu-title">Settings</div>
+    <div class="menu">
+        <a href="settings.html">
+            <span class="menu-icon">⚙️</span>
+            <span>Settings</span>
+        </a>
+        <a href="javascript:void(0)" onclick="logout()">
+            <span class="menu-icon">🚪</span>
+            <span>Logout</span>
+        </a>
+    </div>
+</aside>
+
+<main class="main-content">
+    <div class="topbar">
+        <div class="page-title">
+            <h1>Customer Relationship Management</h1>
+            <p>Maintain customer contact information, addresses, and purchase histories.</p>
+        </div>
+        <button class="btn-add" onclick="openAddCustomerModal()">
+            <span>➕</span> Add Customer
+        </button>
+    </div>
+
+    <!-- METRICS -->
+    <div class="summary-cards">
+        <div class="summary-card">
+            <div class="card-icon" style="background:rgba(99,102,241,0.15); color:#818cf8;">👥</div>
+            <div class="card-info">
+                <h3 id="totalCustomersDisplay">0</h3>
+                <p>Registered Customers</p>
+            </div>
+        </div>
+
+        <div class="summary-card">
+            <div class="card-icon" style="background:rgba(16,185,129,0.15); color:#10b981;">💵</div>
+            <div class="card-info">
+                <h3 id="totalCustomerSpendDisplay">₹0</h3>
+                <p>Customer Lifetime Spend</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONTROLS -->
+    <div class="controls-card">
+        <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="searchInput" placeholder="Search customer name, phone number, email, address...">
+        </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-card">
+        <div style="overflow-x:auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Customer</th>
+                        <th>Phone</th>
+                        <th>Address</th>
+                        <th>Orders</th>
+                        <th>Total Spent</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="customerTableBody">
+                    <tr><td colspan="6" style="text-align:center; padding:30px; color:#94a3b8;">Loading customers...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+<!-- ADD / EDIT CUSTOMER MODAL -->
+<div class="modal" id="customerModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="customerModalTitle">Add Customer Profile</h2>
+            <button class="close-btn" onclick="closeCustomerModal()">×</button>
+        </div>
+
+        <form id="customerForm">
+            <div class="form-group">
+                <label>Customer Full Name *</label>
+                <input type="text" id="custName" placeholder="e.g. Rahul Verma" required>
+            </div>
+
+            <div class="form-group">
+                <label>Phone Number *</label>
+                <input type="text" id="custPhone" placeholder="e.g. +91 98765 43210" required>
+            </div>
+
+            <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" id="custEmail" placeholder="e.g. rahul@example.com">
+            </div>
+
+            <div class="form-group">
+                <label>Address / City</label>
+                <input type="text" id="custAddress" placeholder="e.g. Kakkanad, Kochi">
+            </div>
+
+            <div class="form-group">
+                <label>Notes (Preferences or warranty requests)</label>
+                <textarea id="custNotes" rows="2" placeholder="Notes..."></textarea>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-cancel" onclick="closeCustomerModal()">Cancel</button>
+                <button type="submit" class="btn-submit">Save Profile</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- PURCHASE HISTORY MODAL -->
+<div class="modal" id="historyModal">
+    <div class="modal-content" style="max-width:650px;">
+        <div class="modal-header">
+            <div>
+                <h2 id="historyCustomerName">Customer History</h2>
+                <small id="historyCustomerPhone" style="color:#94a3b8;"></small>
+            </div>
+            <button class="close-btn" onclick="closeHistoryModal()">×</button>
+        </div>
+
+        <div style="background:#182038; padding:12px 18px; border-radius:10px; margin-bottom:15px; display:flex; justify-content:space-between; align-items:center;">
+            <span>Total Lifetime Purchases:</span>
+            <span id="historyTotalSpent" style="color:#10b981; font-weight:bold; font-size:16px;">₹0</span>
+        </div>
+
+        <div style="font-weight:600; font-size:13px; margin-bottom:10px; color:#a5b4fc;">Invoices & Purchased Devices:</div>
+        <div id="customerSalesHistoryList" style="max-height:50vh; overflow-y:auto;"></div>
+
+        <div class="modal-footer">
+            <button type="button" class="btn-cancel" onclick="closeHistoryModal()">Close</button>
+        </div>
+    </div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/customer.js"></script>
+</body>
+</html>

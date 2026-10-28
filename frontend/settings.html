@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MOBIXA — System & Profile Settings</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+        }
+
+        body {
+            background: #090d1a;
+            color: #f1f5f9;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 250px;
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            background: #101528;
+            border-right: 1px solid rgba(255,255,255,0.06);
+            padding: 25px 15px;
+            z-index: 100;
+            overflow-y: auto;
+        }
+
+        .logo {
+            text-align: center;
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 4px;
+            letter-spacing: 1px;
+        }
+
+        .logo span {
+            color: #8b5cf6;
+        }
+
+        .tagline {
+            text-align: center;
+            font-size: 10px;
+            color: #94a3b8;
+            letter-spacing: 1.5px;
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+
+        .menu-title {
+            font-size: 11px;
+            color: #64748b;
+            margin: 18px 10px 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 700;
+        }
+
+        .menu a {
+            display: flex;
+            align-items: center;
+            gap: 13px;
+            padding: 11px 15px;
+            margin-bottom: 5px;
+            border-radius: 10px;
+            color: #cbd5e1;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: 0.25s;
+        }
+
+        .menu a:hover {
+            background: rgba(99,102,241,0.12);
+            color: white;
+        }
+
+        .menu a.active {
+            background: linear-gradient(90deg, #6366f1, #8b5cf6);
+            color: white;
+            box-shadow: 0 4px 15px rgba(99,102,241,0.3);
+        }
+
+        .menu-icon {
+            width: 22px;
+            text-align: center;
+            font-size: 17px;
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding: 25px 35px;
+            min-height: 100vh;
+        }
+
+        .topbar {
+            margin-bottom: 25px;
+        }
+
+        .page-title h1 {
+            font-size: 26px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .page-title p {
+            color: #94a3b8;
+            font-size: 14px;
+        }
+
+        /* TABS */
+        .settings-nav {
+            display: flex;
+            gap: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            margin-bottom: 25px;
+            padding-bottom: 10px;
+        }
+
+        .settings-tab {
+            background: #141a30;
+            border: 1px solid rgba(255,255,255,0.06);
+            color: #94a3b8;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+
+        .settings-tab:hover {
+            color: white;
+        }
+
+        .settings-tab.active {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            border-color: transparent;
+            box-shadow: 0 4px 15px rgba(99,102,241,0.25);
+        }
+
+        /* CARD */
+        .settings-card {
+            background: #141a30;
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 28px;
+            max-width: 700px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group.full {
+            grid-column: span 2;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            color: #94a3b8;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        .form-group input, .form-group textarea {
+            width: 100%;
+            background: #0b0f1d;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 11px 14px;
+            color: white;
+            font-size: 13px;
+            outline: none;
+        }
+
+        .form-group input:focus, .form-group textarea:focus {
+            border-color: #6366f1;
+        }
+
+        .btn-save {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(99,102,241,0.25);
+        }
+
+        @media (max-width: 800px) {
+            .sidebar {
+                width: 70px;
+                padding: 15px 8px;
+            }
+            .sidebar .tagline, .sidebar .menu-title, .sidebar .menu a span:not(.menu-icon) {
+                display: none;
+            }
+            .main-content {
+                margin-left: 70px;
+                padding: 20px 15px;
+            }
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            .form-group.full {
+                grid-column: span 1;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<aside class="sidebar">
+    <div class="logo">
+        Mobi<span>xa</span>
+    </div>
+    <div class="tagline">
+        SMART • SIMPLE • POWERFUL
+    </div>
+
+    <div class="menu-title">Main Menu</div>
+    <div class="menu">
+        <a href="dashboard.html">
+            <span class="menu-icon">📊</span>
+            <span>Dashboard</span>
+        </a>
+        <a href="products.html">
+            <span class="menu-icon">📱</span>
+            <span>Products</span>
+        </a>
+        <a href="inventory.html">
+            <span class="menu-icon">📦</span>
+            <span>Inventory</span>
+        </a>
+        <a href="sales.html">
+            <span class="menu-icon">💰</span>
+            <span>Sales & Billing</span>
+        </a>
+        <a href="customer.html">
+            <span class="menu-icon">👥</span>
+            <span>Customers</span>
+        </a>
+        <a href="employees.html">
+            <span class="menu-icon">👨‍💼</span>
+            <span>Employees</span>
+        </a>
+        <a href="attendance.html">
+            <span class="menu-icon">⏱️</span>
+            <span>Attendance</span>
+        </a>
+        <a href="reports.html">
+            <span class="menu-icon">📈</span>
+            <span>Reports</span>
+        </a>
+    </div>
+
+    <div class="menu-title">Settings</div>
+    <div class="menu">
+        <a href="settings.html" class="active">
+            <span class="menu-icon">⚙️</span>
+            <span>Settings</span>
+        </a>
+        <a href="javascript:void(0)" onclick="logout()">
+            <span class="menu-icon">🚪</span>
+            <span>Logout</span>
+        </a>
+    </div>
+</aside>
+
+<main class="main-content">
+    <div class="topbar">
+        <div class="page-title">
+            <h1>Configuration & User Settings</h1>
+            <p>Customize store information, tax rates, profile details, and security.</p>
+        </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="settings-nav">
+        <button class="settings-tab active" id="tabBtnProfile" onclick="switchTab('profile')">👤 My Profile</button>
+        <button class="settings-tab" id="tabBtnPassword" onclick="switchTab('password')">🔒 Change Password</button>
+        <button class="settings-tab" id="tabBtnStore" onclick="switchTab('store')" style="display:none;">🏪 Shop & Tax Configuration</button>
+    </div>
+
+    <!-- PROFILE TAB -->
+    <div class="tab-content" id="tabContentProfile">
+        <div class="settings-card">
+            <h2 style="font-size:18px; margin-bottom:18px;">Account Profile</h2>
+            <form id="profileForm">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Your Name *</label>
+                        <input type="text" id="profName" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Phone Number</label>
+                        <input type="text" id="profPhone">
+                    </div>
+                    <div class="form-group">
+                        <label>Email Address</label>
+                        <input type="email" id="profEmail" disabled style="opacity:0.6;">
+                    </div>
+                    <div class="form-group">
+                        <label>Account Role</label>
+                        <input type="text" id="profRole" disabled style="opacity:0.6;">
+                    </div>
+                </div>
+                <button type="submit" class="btn-save" style="margin-top:10px;">Save Profile</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- PASSWORD TAB -->
+    <div class="tab-content" id="tabContentPassword" style="display:none;">
+        <div class="settings-card">
+            <h2 style="font-size:18px; margin-bottom:18px;">Update Password</h2>
+            <form id="passwordForm">
+                <div class="form-group">
+                    <label>Current Password *</label>
+                    <input type="password" id="currentPassword" required>
+                </div>
+                <div class="form-group">
+                    <label>New Password * (Min 6 characters)</label>
+                    <input type="password" id="newPassword" required>
+                </div>
+                <div class="form-group">
+                    <label>Confirm New Password *</label>
+                    <input type="password" id="confirmPassword" required>
+                </div>
+                <button type="submit" class="btn-save" style="margin-top:10px;">Update Password</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- SHOP CONFIG TAB (ADMIN) -->
+    <div class="tab-content" id="tabContentStore" style="display:none;">
+        <div class="settings-card">
+            <h2 style="font-size:18px; margin-bottom:18px;">Store & Receipt Information</h2>
+            <form id="storeSettingsForm">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Store Name *</label>
+                        <input type="text" id="storeName" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Tagline / Slogan</label>
+                        <input type="text" id="storeTagline">
+                    </div>
+                    <div class="form-group">
+                        <label>Store Helpline Phone</label>
+                        <input type="text" id="storePhone">
+                    </div>
+                    <div class="form-group">
+                        <label>Support Email</label>
+                        <input type="email" id="storeEmail">
+                    </div>
+                    <div class="form-group full">
+                        <label>Store Address</label>
+                        <input type="text" id="storeAddress">
+                    </div>
+                    <div class="form-group">
+                        <label>Currency Symbol</label>
+                        <input type="text" id="storeCurrency" value="₹">
+                    </div>
+                    <div class="form-group">
+                        <label>Standard Tax Rate (GST %)</label>
+                        <input type="number" id="storeTaxRate" min="0" max="100" value="18">
+                    </div>
+                    <div class="form-group">
+                        <label>Invoice Number Prefix</label>
+                        <input type="text" id="storeInvoicePrefix" value="MOB">
+                    </div>
+                    <div class="form-group full">
+                        <label>Receipt Footer Note</label>
+                        <textarea id="storeFooter" rows="2"></textarea>
+                    </div>
+                </div>
+                <button type="submit" class="btn-save" style="margin-top:10px;">Save Store Configuration</button>
+            </form>
+        </div>
+    </div>
+</main>
+
+<script src="js/api.js"></script>
+<script src="js/settings.js"></script>
+</body>
+</html>
