@@ -138,6 +138,27 @@ describe('Product Management API Suite', () => {
         assert.strictEqual(lowStockRes.body.data[0].name, 'Pixel 9 Pro');
     });
 
+    test('GET /api/products - applies page and limit parameters', async () => {
+        await Product.create([
+            { name: 'Device One', sku: 'PAGE-01', brand: 'Test', purchaseCost: 10, sellingPrice: 20, stock: 5 },
+            { name: 'Device Two', sku: 'PAGE-02', brand: 'Test', purchaseCost: 10, sellingPrice: 20, stock: 5 },
+            { name: 'Device Three', sku: 'PAGE-03', brand: 'Test', purchaseCost: 10, sellingPrice: 20, stock: 5 }
+        ]);
+
+        const res = await request(app)
+            .get('/api/products?page=2&limit=1')
+            .set('Authorization', `Bearer ${adminToken}`);
+
+        assert.strictEqual(res.status, 200);
+        assert.strictEqual(res.body.data.length, 1);
+        assert.deepStrictEqual(res.body.pagination, {
+            page: 2,
+            limit: 1,
+            totalResults: 3,
+            totalPages: 3
+        });
+    });
+
     test('DELETE /api/products/:id - only admin can delete', async () => {
         const prod = await Product.create({
             name: 'Old Accessory',

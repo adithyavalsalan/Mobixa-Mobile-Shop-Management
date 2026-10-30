@@ -143,7 +143,11 @@ function showToast(message, type = 'success') {
     `;
 
     const icon = type === 'success' ? '✓' : (type === 'error' ? '✕' : 'ℹ');
-    toast.innerHTML = `<strong>${icon}</strong> <span>${message}</span>`;
+    const iconElement = document.createElement('strong');
+    iconElement.textContent = icon;
+    const messageElement = document.createElement('span');
+    messageElement.textContent = String(message);
+    toast.append(iconElement, messageElement);
     container.appendChild(toast);
 
     setTimeout(() => {
@@ -151,6 +155,16 @@ function showToast(message, type = 'success') {
         toast.style.transition = 'opacity 0.4s ease';
         setTimeout(() => toast.remove(), 400);
     }, 3500);
+}
+
+function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, character => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    })[character]);
 }
 
 // Format currency

@@ -170,6 +170,39 @@ describe('Inventory & Sales Billing POS Suite', () => {
         assert.strictEqual(product.stock, 10);
     });
 
+    test('POST /api/sales - rejects duplicate lines that exceed available stock', async () => {
+        const res = await request(app)
+            .post('/api/sales')
+            .set('Authorization', `Bearer ${employeeToken}`)
+            .send({
+                customerName: 'Duplicate Item Tester',
+                items: [
+                    { productId: testProduct._id, quantity: 6 },
+                    { productId: testProduct._id, quantity: 5 }
+                ]
+            });
+
+        assert.strictEqual(res.status, 400);
+        assert.ok(res.body.message.includes('Insufficient stock'));
+        const product = await Product.findById(testProduct._id);
+        assert.strictEqual(product.stock, 10);
+        assert.strictEqual(await Sale.countDocuments(), 0);
+    });
+
+    test('POST /api/sales - rejects fractional quantities', async () => {
+        const res = await request(app)
+            .post('/api/sales')
+            .set('Authorization', `Bearer ${employeeToken}`)
+            .send({
+                customerName: 'Fractional Quantity Tester',
+                items: [{ productId: testProduct._id, quantity: 1.5 }]
+            });
+
+        assert.strictEqual(res.status, 400);
+        const product = await Product.findById(testProduct._id);
+        assert.strictEqual(product.stock, 10);
+    });
+
     test('POST /api/sales/:id/cancel - cancels sale and returns stock to inventory', async () => {
         // Create a sale first
         const saleRes = await request(app)

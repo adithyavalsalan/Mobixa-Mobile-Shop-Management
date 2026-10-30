@@ -4,6 +4,7 @@ const request = require('supertest');
 const app = require('../backend/server');
 const User = require('../backend/models/User');
 const Customer = require('../backend/models/Customer');
+const Sale = require('../backend/models/Sale');
 const { setupTestDB, teardownTestDB, clearTestDB } = require('./setup');
 
 describe('Customers, Attendance & Reports Suite', () => {
@@ -116,5 +117,60 @@ describe('Customers, Attendance & Reports Suite', () => {
         assert.strictEqual(res.body.success, true);
         assert.strictEqual(res.body.reportType, 'sales');
         assert.ok(res.body.summary);
+    });
+
+    test('GET /api/health - reports connected database readiness', async () => {
+        const res = await request(app).get('/api/health');
+
+        assert.strictEqual(res.status, 200);
+        assert.strictEqual(res.body.status, 'UP');
+        assert.strictEqual(res.body.database.isConnected, true);
+    });
+
+    test('GET /api/reports/generate - rejects invalid date ranges', async () => {
+        const invalidDate = await request(app)
+            .get('/api/reports/generate?startDate=2026-02-30')
+            .set('Authorization', `Bearer ${adminToken}`);
+        const reversedRange = await request(app)
+            .get('/api/reports/generate?startDate=2026-10-10&endDate=2026-10-09')
+            .set('Authorization', `Bearer ${adminToken}`);
+
+        assert.strictEqual(invalidDate.status, 400);
+        assert.strictEqual(reversedRange.status, 400);
+    });
+
+    test('GET /api/reports/export-csv - escapes formula-like customer data', async () => {
+        await Customer.create({
+            name: '=HYPERLINK("https://example.com","open")',
+            phone: '1234567890'
+        });
+
+        const res = await request(app)
+            .get('/api/reports/export-csv?reportType=customers')
+            .set('Authorization', `Bearer ${adminToken}`);
+
+        assert.strictEqual(res.status, 200);
+        assert.match(res.text, /"'=HYPERLINK\(""https:\/\/example\.com"",""open""\)","1234567890"/);
+    });
+
+    test('GET /api/employees/:id - reports lifetime sales beyond recent-sales limit', async () => {
+        await Sale.create(Array.from({ length: 21 }, (_, index) => ({
+            invoiceNumber: `EMP-${String(index + 1).padStart(4, '0')}`,
+            customerName: 'Test Customer',
+            soldBy: empUser._id,
+            items: [],
+            subtotal: 100,
+            grandTotal: 100,
+            saleStatus: 'Completed'
+        })));
+
+        const res = await request(app)
+            .get(`/api/employees/${empUser._id}`)
+            .set('Authorization', `Bearer ${adminToken}`);
+
+        assert.strictEqual(res.status, 200);
+        assert.strictEqual(res.body.data.stats.totalSalesCount, 21);
+        assert.strictEqual(res.body.data.stats.totalSalesAmount, 2100);
+        assert.strictEqual(res.body.data.recentSales.length, 20);
     });
 });

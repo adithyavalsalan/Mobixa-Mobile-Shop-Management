@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "MOBIXA - Complete Mobile Shop Management System",
   "main": "backend/server.js",
+  "engines": {
+    "node": ">=22 <25"
+  },
   "scripts": {
     "start": "node backend/server.js",
     "dev": "node backend/server.js",

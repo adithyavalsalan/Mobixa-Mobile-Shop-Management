@@ -65,17 +65,17 @@ function renderRecentTransactions(transactions) {
 
     tbody.innerHTML = transactions.map(t => {
         const dateStr = formatDate(t.createdAt);
-        const productsSummary = (t.items || []).map(i => `${i.name} (x${i.quantity})`).join(', ') || 'Item';
+        const productsSummary = (t.items || []).map(i => `${escapeHtml(i.name)} (x${i.quantity})`).join(', ') || 'Item';
         const statusClass = t.saleStatus === 'Completed' ? 'completed' : 'cancelled';
 
         return `
             <tr>
-                <td style="font-weight:600; color:#8b5cf6;">${t.invoiceNumber}</td>
-                <td>${t.customerName}</td>
+                <td style="font-weight:600; color:#8b5cf6;">${escapeHtml(t.invoiceNumber)}</td>
+                <td>${escapeHtml(t.customerName)}</td>
                 <td><small style="color:#94a3b8;">${productsSummary}</small></td>
                 <td style="font-weight:700;">${formatCurrency(t.grandTotal)}</td>
-                <td><span class="badge ${t.paymentMethod.toLowerCase()}">${t.paymentMethod}</span></td>
-                <td><span class="status ${statusClass}">${t.saleStatus}</span></td>
+                <td><span class="badge ${escapeHtml(t.paymentMethod.toLowerCase())}">${escapeHtml(t.paymentMethod)}</span></td>
+                <td><span class="status ${statusClass}">${escapeHtml(t.saleStatus)}</span></td>
             </tr>
         `;
     }).join('');
@@ -100,8 +100,8 @@ function renderLowStock(items) {
                 <div style="display:flex; align-items:center; gap:12px;">
                     <div style="font-size:22px;">📱</div>
                     <div>
-                        <div style="font-weight:600; font-size:14px;">${p.name}</div>
-                        <small style="color:#94a3b8;">${p.brand} • SKU: ${p.sku}</small>
+                        <div style="font-weight:600; font-size:14px;">${escapeHtml(p.name)}</div>
+                        <small style="color:#94a3b8;">${escapeHtml(p.brand)} • SKU: ${escapeHtml(p.sku)}</small>
                     </div>
                 </div>
                 <div>
@@ -127,7 +127,7 @@ function renderTopProducts(topProducts) {
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding:8px 0; border-bottom:1px dashed rgba(255,255,255,0.05);">
             <div>
                 <span style="color:#8b5cf6; font-weight:bold; margin-right:8px;">#${idx + 1}</span>
-                <span style="font-weight:500;">${p.name}</span>
+                <span style="font-weight:500;">${escapeHtml(p.name)}</span>
             </div>
             <div style="text-align:right;">
                 <div style="font-weight:600; color:#10b981;">${formatCurrency(p.revenue)}</div>

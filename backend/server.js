@@ -1,16 +1,13 @@
 const path = require('path');
 const fs = require('fs');
+const mongoose = require('mongoose');
 
 // Auto-create .env from .env.example if missing
 const envPath = path.join(__dirname, '../.env');
 const envExamplePath = path.join(__dirname, '../.env.example');
-if (!fs.existsSync(envPath) && fs.existsSync(envExamplePath)) {
-    try {
-        fs.copyFileSync(envExamplePath, envPath);
-        console.log('[Mobixa] Auto-generated .env from .env.example');
-    } catch (e) {
-        // Continue if unable to write
-    }
+if (process.env.NODE_ENV !== 'production' && !fs.existsSync(envPath) && fs.existsSync(envExamplePath)) {
+    fs.copyFileSync(envExamplePath, envPath);
+    console.log('[Mobixa] Auto-generated .env from .env.example');
 }
 require('dotenv').config({ path: envPath });
 
@@ -74,9 +71,9 @@ app.use(express.static(frontendPath));
 // Health check endpoint
 app.get('/api/health', (req, res) => {
     const dbStatus = getDbStatus();
-    res.json({
-        success: true,
-        status: 'UP',
+    res.status(dbStatus.isConnected ? 200 : 503).json({
+        success: dbStatus.isConnected,
+        status: dbStatus.isConnected ? 'UP' : 'DEGRADED',
         timestamp: new Date().toISOString(),
         uptime: process.uptime(),
         database: dbStatus,
@@ -106,16 +103,35 @@ app.use(notFound);
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
+let server;
+let shuttingDown = false;
 
 // Connect to DB and start listening only if executed directly
 if (require.main === module) {
     try {
         signToken({ _id: 'configuration-check' });
         connectDB().then(() => {
-            app.listen(PORT, () => {
+            if (shuttingDown) {
+                return mongoose.disconnect();
+            }
+            server = app.listen(PORT, () => {
                 console.log(`[Mobixa] Server running at http://localhost:${PORT}`);
                 console.log(`[Mobixa] Serving static frontend from: ${frontendPath}`);
             });
+            server.on('error', error => {
+                if (error.code === 'EADDRINUSE') {
+                    console.error(`[Mobixa] Port ${PORT} is already in use. Another server may already be running. Close that server or set a different PORT in .env.`);
+                } else {
+                    console.error(`[Mobixa] Failed to listen on port ${PORT}: ${error.message}`);
+                }
+                process.exitCode = 1;
+                mongoose.disconnect().catch(disconnectError => {
+                    console.error(`[Mobixa] Failed to disconnect from MongoDB: ${disconnectError.message}`);
+                });
+            });
+        }).catch(error => {
+            console.error(`[Mobixa] Unable to start without a database connection: ${error.message}`);
+            process.exitCode = 1;
         });
     } catch (error) {
         console.error(`[Mobixa] Configuration error: ${error.message}`);
@@ -123,10 +139,32 @@ if (require.main === module) {
     }
 }
 
-// Graceful shutdown handling
-process.on('SIGINT', async () => {
-    console.log('\n[Mobixa] Gracefully shutting down...');
-    process.exit(0);
-});
+const shutdown = signal => {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    console.log(`\n[Mobixa] Received ${signal}; shutting down gracefully...`);
+
+    const disconnect = () => mongoose.disconnect().catch(error => {
+        console.error(`[Mobixa] Failed to disconnect from MongoDB: ${error.message}`);
+        process.exitCode = 1;
+    });
+
+    if (server) {
+        server.close(error => {
+            if (error) {
+                console.error(`[Mobixa] Failed to close HTTP server: ${error.message}`);
+                process.exitCode = 1;
+            }
+            disconnect();
+        });
+    } else {
+        disconnect();
+    }
+};
+
+if (require.main === module) {
+    process.on('SIGINT', () => shutdown('SIGINT'));
+    process.on('SIGTERM', () => shutdown('SIGTERM'));
+}
 
 module.exports = app;

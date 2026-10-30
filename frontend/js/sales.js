@@ -6,13 +6,16 @@
 let allSales = [];
 let availableProducts = [];
 let activeCart = [];
+let currentTaxRate = 18;
+let currentUser = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
-    const user = await requireAuth();
-    if (!user) return;
+    currentUser = await requireAuth();
+    if (!currentUser) return;
 
     loadSales();
     loadProductCatalog();
+    loadSaleSettings();
 
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
@@ -77,6 +80,26 @@ async function loadProductCatalog() {
     }
 }
 
+async function loadSaleSettings() {
+    const res = await apiCall('/settings');
+    if (!res || !res.ok) {
+        showToast('Could not load shop tax settings; using the default 18% tax rate.', 'error');
+        return;
+    }
+
+    const configuredTaxRate = Number(res.data.data?.defaultTaxRate);
+    if (Number.isFinite(configuredTaxRate) && configuredTaxRate >= 0 && configuredTaxRate <= 100) {
+        currentTaxRate = configuredTaxRate;
+    }
+    updateTaxLabels();
+    updateCartCalculations();
+}
+
+function updateTaxLabels() {
+    const taxLabel = document.getElementById('saleTaxLabel');
+    if (taxLabel) taxLabel.textContent = `Tax (${currentTaxRate}% GST):`;
+}
+
 function populateProductSelect() {
     const select = document.getElementById('saleProductSelect');
     if (!select) return;
@@ -88,8 +111,8 @@ function populateProductSelect() {
 
     select.innerHTML = '<option value="">-- Choose in-stock device/item --</option>' +
         availableProducts.map(p => `
-            <option value="${p._id}" data-price="${p.sellingPrice}" data-stock="${p.stock}">
-                ${p.name} (${p.brand}) - ₹${p.sellingPrice.toLocaleString()} [${p.stock} in stock]
+            <option value="${escapeHtml(p._id)}" data-price="${p.sellingPrice}" data-stock="${p.stock}">
+                ${escapeHtml(p.name)} (${escapeHtml(p.brand)}) - ₹${p.sellingPrice.toLocaleString()} [${p.stock} in stock]
             </option>
         `).join('');
 }
@@ -110,7 +133,7 @@ function onProductSelect() {
         if (imeiContainer) imeiContainer.style.display = 'block';
         if (imeiSelect) {
             imeiSelect.innerHTML = '<option value="">-- Select IMEI (Optional) --</option>' +
-                prod.imeiList.map(i => `<option value="${i}">${i}</option>`).join('');
+                prod.imeiList.map(i => `<option value="${escapeHtml(i)}">${escapeHtml(i)}</option>`).join('');
         }
     } else {
         if (imeiContainer) imeiContainer.style.display = 'none';
@@ -181,8 +204,8 @@ function renderCartItems() {
         container.innerHTML = activeCart.map((item, idx) => `
             <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:#0b0f1d; border-radius:8px; margin-bottom:6px; font-size:13px;">
                 <div>
-                    <strong>${item.name}</strong>
-                    <small style="color:#94a3b8; display:block;">₹${item.unitPrice.toLocaleString()} × ${item.quantity} ${item.imei ? '• IMEI: ' + item.imei : ''}</small>
+                    <strong>${escapeHtml(item.name)}</strong>
+                    <small style="color:#94a3b8; display:block;">₹${item.unitPrice.toLocaleString()} × ${item.quantity} ${item.imei ? '• IMEI: ' + escapeHtml(item.imei) : ''}</small>
                 </div>
                 <div style="display:flex; align-items:center; gap:10px;">
                     <span style="font-weight:bold; color:#10b981;">₹${item.total.toLocaleString()}</span>
@@ -198,11 +221,9 @@ function renderCartItems() {
 function updateCartCalculations() {
     const subtotal = activeCart.reduce((sum, item) => sum + item.total, 0);
     const discount = Number(document.getElementById('saleDiscount')?.value) || 0;
-    const taxRate = 18; // 18% standard GST / VAT
-
     const taxableAmount = Math.max(0, subtotal - discount);
-    const taxAmount = Math.round(taxableAmount * (taxRate / 100));
-    const grandTotal = taxableAmount + taxAmount;
+    const taxAmount = Math.round(taxableAmount * (currentTaxRate / 100) * 100) / 100;
+    const grandTotal = Math.round((taxableAmount + taxAmount) * 100) / 100;
 
     setText('calcSubtotal', formatCurrency(subtotal));
     setText('calcTax', formatCurrency(taxAmount));
@@ -241,25 +262,25 @@ function renderSalesTable(sales) {
 
     tbody.innerHTML = sales.map(s => {
         const date = formatDate(s.createdAt);
-        const productsSummary = (s.items || []).map(i => `${i.name} (x${i.quantity})`).join(', ');
+        const productsSummary = (s.items || []).map(i => `${escapeHtml(i.name)} (x${i.quantity})`).join(', ');
         const statusClass = s.saleStatus === 'Completed' ? 'completed' : 'cancelled';
 
         return `
             <tr>
-                <td style="font-weight:700; color:#8b5cf6;">${s.invoiceNumber}</td>
+                <td style="font-weight:700; color:#8b5cf6;">${escapeHtml(s.invoiceNumber)}</td>
                 <td style="color:#94a3b8;">${date}</td>
                 <td>
-                    <div style="font-weight:600; color:white;">${s.customerName}</div>
-                    <small style="color:#94a3b8;">${s.customerPhone || 'Walk-in'}</small>
+                    <div style="font-weight:600; color:white;">${escapeHtml(s.customerName)}</div>
+                    <small style="color:#94a3b8;">${escapeHtml(s.customerPhone || 'Walk-in')}</small>
                 </td>
                 <td><small style="color:#cbd5e1;">${productsSummary || '-'}</small></td>
                 <td style="font-weight:700; color:#10b981;">${formatCurrency(s.grandTotal)}</td>
-                <td><span class="badge ${s.paymentMethod.toLowerCase()}">${s.paymentMethod}</span></td>
-                <td><span class="status ${statusClass}">${s.saleStatus}</span></td>
+                <td><span class="badge ${escapeHtml(s.paymentMethod.toLowerCase())}">${escapeHtml(s.paymentMethod)}</span></td>
+                <td><span class="status ${statusClass}">${escapeHtml(s.saleStatus)}</span></td>
                 <td>
                     <div style="display:flex; gap:8px;">
-                        <button class="action-btn" onclick="viewReceipt('${s._id}')" title="View / Print Receipt">🧾 Print</button>
-                        ${s.saleStatus === 'Completed' ? `<button class="action-btn delete-btn" onclick="cancelSaleModal('${s._id}', '${s.invoiceNumber}')" title="Return / Cancel">↩️ Return</button>` : ''}
+                        <button class="action-btn" onclick="viewReceipt('${escapeHtml(s._id)}')" title="View / Print Receipt">🧾 Print</button>
+                        ${s.saleStatus === 'Completed' && currentUser.role === 'admin' ? `<button class="action-btn delete-btn" onclick="cancelSaleModal('${escapeHtml(s._id)}')" title="Return / Cancel">↩️ Return</button>` : ''}
                     </div>
                 </td>
             </tr>
@@ -349,8 +370,8 @@ async function viewReceipt(saleId) {
         itemsBody.innerHTML = (sale.items || []).map(i => `
             <tr>
                 <td style="padding:6px 0;">
-                    <strong>${i.name}</strong>
-                    ${i.imei ? `<small style="display:block; color:#555;">IMEI: ${i.imei}</small>` : ''}
+                    <strong>${escapeHtml(i.name)}</strong>
+                    ${i.imei ? `<small style="display:block; color:#555;">IMEI: ${escapeHtml(i.imei)}</small>` : ''}
                 </td>
                 <td style="text-align:center;">${i.quantity}</td>
                 <td style="text-align:right;">₹${i.unitPrice.toLocaleString()}</td>
@@ -360,7 +381,8 @@ async function viewReceipt(saleId) {
 
         document.getElementById('receiptSubtotal').textContent = formatCurrency(sale.subtotal);
         document.getElementById('receiptDiscount').textContent = `- ${formatCurrency(sale.discount)}`;
-        document.getElementById('receiptTax').textContent = `${formatCurrency(sale.taxAmount)} (${sale.taxRate}%)`;
+        document.getElementById('receiptTax').textContent = formatCurrency(sale.taxAmount);
+        document.getElementById('receiptTaxLabel').textContent = `Tax (${sale.taxRate}%):`;
         document.getElementById('receiptGrandTotal').textContent = formatCurrency(sale.grandTotal);
         document.getElementById('receiptFooter').textContent = settings.invoiceFooter || 'Thank you for shopping with us!';
 
@@ -378,7 +400,9 @@ function printReceipt() {
     window.print();
 }
 
-async function cancelSaleModal(id, invoiceNumber) {
+async function cancelSaleModal(id) {
+    const sale = allSales.find(item => item._id === id);
+    const invoiceNumber = sale ? sale.invoiceNumber : id;
     const reason = prompt(`Enter reason for returning/cancelling invoice ${invoiceNumber}:`);
     if (!reason || !reason.trim()) return;
 

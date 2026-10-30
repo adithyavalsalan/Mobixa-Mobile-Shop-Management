@@ -111,10 +111,10 @@ async function loadMyAttendance() {
 
             return `
                 <tr>
-                    <td style="font-weight:600; color:white;">${r.date}</td>
+                    <td style="font-weight:600; color:white;">${escapeHtml(r.date)}</td>
                     <td>${inTime}</td>
                     <td>${outTime}</td>
-                    <td><span class="status completed">${r.status}</span></td>
+                    <td><span class="status completed">${escapeHtml(r.status)}</span></td>
                 </tr>
             `;
         }).join('');
@@ -149,12 +149,12 @@ async function loadAllAttendance() {
 
             return `
                 <tr>
-                    <td style="font-weight:600; color:white;">${empName}</td>
-                    <td style="color:#94a3b8;"><small>${empRole}</small></td>
-                    <td>${r.date}</td>
+                    <td style="font-weight:600; color:white;">${escapeHtml(empName)}</td>
+                    <td style="color:#94a3b8;"><small>${escapeHtml(empRole)}</small></td>
+                    <td>${escapeHtml(r.date)}</td>
                     <td>${inTime}</td>
                     <td>${outTime}</td>
-                    <td><span class="status completed">${r.status}</span></td>
+                    <td><span class="status completed">${escapeHtml(r.status)}</span></td>
                 </tr>
             `;
         }).join('');

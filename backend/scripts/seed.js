@@ -3,10 +3,8 @@ const fs = require('fs');
 
 const envPath = path.join(__dirname, '../../.env');
 const envExamplePath = path.join(__dirname, '../../.env.example');
-if (!fs.existsSync(envPath) && fs.existsSync(envExamplePath)) {
-    try {
-        fs.copyFileSync(envExamplePath, envPath);
-    } catch (e) {}
+if (process.env.NODE_ENV !== 'production' && !fs.existsSync(envPath) && fs.existsSync(envExamplePath)) {
+    fs.copyFileSync(envExamplePath, envPath);
 }
 require('dotenv').config({ path: envPath });
 const mongoose = require('mongoose');
@@ -15,7 +13,6 @@ const { connectDB } = require('../config/db');
 const User = require('../models/User');
 const Product = require('../models/Product');
 const Customer = require('../models/Customer');
-const Sale = require('../models/Sale');
 const InventoryMovement = require('../models/InventoryMovement');
 const Settings = require('../models/Settings');
 
@@ -91,7 +88,7 @@ const seedData = async () => {
                 salary: 28000,
                 status: 'active'
             });
-            console.log(`[Seed] Created employee account: ${empEmail} (password: ${empPass})`);
+            console.log(`[Seed] Created employee account: ${empEmail}`);
         } else {
             console.log(`[Seed] Employee account already exists: ${empEmail}`);
         }
@@ -244,10 +241,14 @@ const seedData = async () => {
         }
 
         console.log('[Seed] Seeding completed successfully!');
-        process.exit(0);
     } catch (error) {
         console.error('[Seed] Error during seeding:', error);
-        process.exit(1);
+        process.exitCode = 1;
+    } finally {
+        await mongoose.disconnect().catch(error => {
+            console.error('[Seed] Failed to disconnect from database:', error.message);
+            process.exitCode = 1;
+        });
     }
 };
 

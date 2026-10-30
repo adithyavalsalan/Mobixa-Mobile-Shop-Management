@@ -3,23 +3,58 @@ const Product = require('../models/Product');
 const Customer = require('../models/Customer');
 const User = require('../models/User');
 
+const reportTypes = new Set(['sales', 'inventory', 'customers', 'employees']);
+
+const parseReportFilters = (query, res) => {
+    const reportType = query.reportType || 'sales';
+    if (!reportTypes.has(reportType)) {
+        res.status(400).json({ success: false, message: 'Invalid report type.' });
+        return null;
+    }
+
+    const dateQuery = {};
+    const dateRange = {};
+    for (const [parameter, operator, time] of [
+        ['startDate', '$gte', 'T00:00:00.000Z'],
+        ['endDate', '$lte', 'T23:59:59.999Z']
+    ]) {
+        const value = query[parameter];
+        if (!value) continue;
+        if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+            res.status(400).json({ success: false, message: `${parameter} must use YYYY-MM-DD format.` });
+            return null;
+        }
+        const date = new Date(`${value}${time}`);
+        if (Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== value) {
+            res.status(400).json({ success: false, message: `${parameter} is not a valid date.` });
+            return null;
+        }
+        dateRange[operator] = date;
+    }
+
+    if (dateRange.$gte && dateRange.$lte && dateRange.$gte > dateRange.$lte) {
+        res.status(400).json({ success: false, message: 'startDate must be on or before endDate.' });
+        return null;
+    }
+    if (Object.keys(dateRange).length) dateQuery.createdAt = dateRange;
+
+    return { reportType, dateQuery };
+};
+
+const csvCell = value => {
+    let text = String(value ?? '');
+    if (/^[\t\r\n ]*[=+\-@]/.test(text)) text = `'${text}`;
+    return `"${text.replace(/"/g, '""')}"`;
+};
+
 // @desc    Generate report data
 // @route   GET /api/reports/generate
 // @access  Private (Admin)
 const generateReport = async (req, res, next) => {
     try {
-        const { reportType = 'sales', startDate, endDate } = req.query;
-
-        const dateQuery = {};
-        if (startDate || endDate) {
-            dateQuery.createdAt = {};
-            if (startDate) dateQuery.createdAt.$gte = new Date(startDate);
-            if (endDate) {
-                const end = new Date(endDate);
-                end.setHours(23, 59, 59, 999);
-                dateQuery.createdAt.$lte = end;
-            }
-        }
+        const filters = parseReportFilters(req.query, res);
+        if (!filters) return;
+        const { reportType, dateQuery } = filters;
 
         if (reportType === 'inventory') {
             const products = await Product.find({ status: 'active' }).sort({ stock: 1 }).lean();
@@ -128,40 +163,39 @@ const generateReport = async (req, res, next) => {
 // @access  Private (Admin)
 const exportCSV = async (req, res, next) => {
     try {
-        const { reportType = 'sales', startDate, endDate } = req.query;
-
-        let filename = `mobixa-${reportType}-report-${new Date().toISOString().slice(0, 10)}.csv`;
+        const filters = parseReportFilters(req.query, res);
+        if (!filters) return;
+        const { reportType, dateQuery } = filters;
+        const filename = `mobixa-${reportType}-report-${new Date().toISOString().slice(0, 10)}.csv`;
         let csvContent = '';
 
         if (reportType === 'inventory') {
             const products = await Product.find({ status: 'active' }).lean();
             csvContent = 'Name,SKU,Brand,Category,Cost Price,Selling Price,Stock,Status\n';
             products.forEach(p => {
-                csvContent += `"${p.name}","${p.sku}","${p.brand}","${p.category}",${p.purchaseCost},${p.sellingPrice},${p.stock},"${p.stock <= p.minStockLevel ? 'Low Stock' : 'In Stock'}"\n`;
+                csvContent += [
+                    p.name, p.sku, p.brand, p.category, p.purchaseCost, p.sellingPrice,
+                    p.stock, p.stock <= p.minStockLevel ? 'Low Stock' : 'In Stock'
+                ].map(csvCell).join(',') + '\n';
             });
         } else if (reportType === 'customers') {
             const customers = await Customer.find().lean();
             csvContent = 'Name,Phone,Email,Total Purchases,Total Spent\n';
             customers.forEach(c => {
-                csvContent += `"${c.name}","${c.phone}","${c.email || ''}",${c.totalPurchases || 0},${c.totalSpent || 0}\n`;
+                csvContent += [
+                    c.name, c.phone, c.email, c.totalPurchases || 0, c.totalSpent || 0
+                ].map(csvCell).join(',') + '\n';
             });
         } else {
-            const dateQuery = {};
-            if (startDate || endDate) {
-                dateQuery.createdAt = {};
-                if (startDate) dateQuery.createdAt.$gte = new Date(startDate);
-                if (endDate) {
-                    const end = new Date(endDate);
-                    end.setHours(23, 59, 59, 999);
-                    dateQuery.createdAt.$lte = end;
-                }
-            }
             const sales = await Sale.find(dateQuery).sort({ createdAt: -1 }).populate('soldBy', 'name').lean();
             csvContent = 'Invoice Number,Date,Customer,Product(s),Subtotal,Discount,Tax,Grand Total,Payment Method,Status\n';
             sales.forEach(s => {
                 const productNames = (s.items || []).map(i => `${i.name} (x${i.quantity})`).join('; ');
-                const date = new Date(s.createdAt).toLocaleDateString();
-                csvContent += `"${s.invoiceNumber}","${date}","${s.customerName}","${productNames}",${s.subtotal},${s.discount},${s.taxAmount},${s.grandTotal},"${s.paymentMethod}","${s.saleStatus}"\n`;
+                const date = new Date(s.createdAt).toISOString().slice(0, 10);
+                csvContent += [
+                    s.invoiceNumber, date, s.customerName, productNames, s.subtotal,
+                    s.discount, s.taxAmount, s.grandTotal, s.paymentMethod, s.saleStatus
+                ].map(csvCell).join(',') + '\n';
             });
         }
 

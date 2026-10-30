@@ -3,7 +3,6 @@ const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-let isConnected = false;
 let mongodProcess = null;
 
 const tryAutoStartMongod = async () => {
@@ -46,23 +45,24 @@ const connectDB = async () => {
     try {
         mongoose.set('strictQuery', false);
         const conn = await mongoose.connect(primaryUri, {
-            serverSelectionTimeoutMS: 3000,
+            serverSelectionTimeoutMS: 10000,
         });
-        isConnected = true;
         console.log(`[Database] MongoDB connected: ${conn.connection.host}/${conn.connection.name}`);
         return conn;
     } catch (error) {
+        let connectionError = error;
+
         // Fallback: If uri used 'localhost', retry with '127.0.0.1' (handles Windows IPv6 ::1 issue)
         if (primaryUri.includes('localhost')) {
             const ipv4Uri = primaryUri.replace('localhost', '127.0.0.1');
             try {
                 const conn = await mongoose.connect(ipv4Uri, {
-                    serverSelectionTimeoutMS: 3000,
+                    serverSelectionTimeoutMS: 10000,
                 });
-                isConnected = true;
                 console.log(`[Database] MongoDB connected via 127.0.0.1: ${conn.connection.host}/${conn.connection.name}`);
                 return conn;
-            } catch (fallbackErr) {
+            } catch (fallbackError) {
+                connectionError = fallbackError;
                 // Proceed to auto-start attempt
             }
         }
@@ -74,19 +74,23 @@ const connectDB = async () => {
                 try {
                     const fallbackUri = primaryUri.replace('localhost', '127.0.0.1');
                     const conn = await mongoose.connect(fallbackUri, {
-                        serverSelectionTimeoutMS: 4000,
+                        serverSelectionTimeoutMS: 10000,
                     });
-                    isConnected = true;
                     console.log(`[Database] MongoDB connected after auto-start: ${conn.connection.host}/${conn.connection.name}`);
                     return conn;
                 } catch (retryErr) {
                     console.error('[Database] MongoDB connection retry failed:', retryErr.message);
+                    connectionError = retryErr;
                 }
             }
         }
-        isConnected = false;
-        console.error('[Database] MongoDB connection error:', error.message);
-        console.error('[Database] Please ensure MongoDB Community Server is running on port 27017 or set MONGO_URI in .env');
+        console.error('[Database] MongoDB connection error:', connectionError.message);
+        if (!primaryUri.includes('127.0.0.1') && !primaryUri.includes('localhost')) {
+            console.error('[Database] Check the Atlas URI, database credentials, and cluster IP access list.');
+        } else {
+            console.error('[Database] Please ensure MongoDB Community Server is running on port 27017 or set MONGO_URI in .env');
+        }
+        throw connectionError;
     }
 };
 

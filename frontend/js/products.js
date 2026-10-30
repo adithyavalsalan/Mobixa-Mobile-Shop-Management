@@ -5,10 +5,11 @@
 
 let allProducts = [];
 let currentEditingId = null;
+let currentUser = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
-    const user = await requireAuth();
-    if (!user) return;
+    currentUser = await requireAuth();
+    if (!currentUser) return;
 
     loadProducts();
 
@@ -106,21 +107,21 @@ function renderProductTable(products) {
         return `
             <tr>
                 <td>
-                    <div style="font-weight:600; color:white;">${p.name}</div>
-                    <small style="color:#94a3b8;">${p.brand} ${p.modelName ? '• ' + p.modelName : ''}</small>
+                    <div style="font-weight:600; color:white;">${escapeHtml(p.name)}</div>
+                    <small style="color:#94a3b8;">${escapeHtml(p.brand)} ${p.modelName ? '• ' + escapeHtml(p.modelName) : ''}</small>
                     ${imeiDisplay}
                 </td>
-                <td style="font-family:monospace; color:#a5b4fc;">${p.sku}</td>
-                <td><span class="category-badge">${p.category}</span></td>
+                <td style="font-family:monospace; color:#a5b4fc;">${escapeHtml(p.sku)}</td>
+                <td><span class="category-badge">${escapeHtml(p.category)}</span></td>
                 <td>${formatCurrency(p.purchaseCost)}</td>
                 <td style="font-weight:700; color:#10b981;">${formatCurrency(p.sellingPrice)}</td>
                 <td style="font-weight:bold;">${p.stock}</td>
                 <td>${statusBadge}</td>
                 <td>
                     <div style="display:flex; gap:8px;">
-                        <button class="action-btn" onclick="openEditModal('${p._id}')" title="Edit Product">✏️</button>
-                        <button class="action-btn" onclick="viewProductDetails('${p._id}')" title="View Details">👁️</button>
-                        <button class="action-btn delete-btn" onclick="deleteProductById('${p._id}', '${p.name}')" title="Delete Product">🗑️</button>
+                        <button class="action-btn" onclick="openEditModal('${escapeHtml(p._id)}')" title="Edit Product">✏️</button>
+                        <button class="action-btn" onclick="viewProductDetails('${escapeHtml(p._id)}')" title="View Details">👁️</button>
+                        ${currentUser.role === 'admin' ? `<button class="action-btn delete-btn" onclick="deleteProductById('${escapeHtml(p._id)}')" title="Delete Product">🗑️</button>` : ''}
                     </div>
                 </td>
             </tr>
@@ -230,7 +231,9 @@ async function handleProductSubmit(e) {
     }
 }
 
-async function deleteProductById(id, name) {
+async function deleteProductById(id) {
+    const product = allProducts.find(item => item._id === id);
+    const name = product ? product.name : 'this product';
     if (!confirm(`Are you sure you want to delete or archive '${name}'?`)) return;
 
     try {
@@ -251,7 +254,7 @@ function viewProductDetails(id) {
     if (!p) return;
 
     const imeisHtml = (p.imeiList && p.imeiList.length > 0)
-        ? p.imeiList.map(i => `<span style="background:rgba(99,102,241,0.2); padding:2px 8px; border-radius:4px; font-size:11px; margin-right:4px;">${i}</span>`).join('')
+        ? p.imeiList.map(i => `<span style="background:rgba(99,102,241,0.2); padding:2px 8px; border-radius:4px; font-size:11px; margin-right:4px;">${escapeHtml(i)}</span>`).join('')
         : '<em>None recorded</em>';
 
     const info = `

@@ -78,9 +78,9 @@ function renderReportView(report) {
 
         tableBody.innerHTML = (report.data || []).map(p => `
             <tr>
-                <td style="font-weight:600; color:white;">${p.name} <small style="color:#94a3b8;">(${p.brand})</small></td>
-                <td style="font-family:monospace; color:#a5b4fc;">${p.sku}</td>
-                <td>${p.category}</td>
+                <td style="font-weight:600; color:white;">${escapeHtml(p.name)} <small style="color:#94a3b8;">(${escapeHtml(p.brand)})</small></td>
+                <td style="font-family:monospace; color:#a5b4fc;">${escapeHtml(p.sku)}</td>
+                <td>${escapeHtml(p.category)}</td>
                 <td>${formatCurrency(p.purchaseCost)}</td>
                 <td style="color:#10b981; font-weight:600;">${formatCurrency(p.sellingPrice)}</td>
                 <td style="font-weight:bold;">${p.stock}</td>
@@ -107,9 +107,9 @@ function renderReportView(report) {
 
         tableBody.innerHTML = (report.data || []).map(c => `
             <tr>
-                <td style="font-weight:600; color:white;">${c.name}</td>
-                <td>${c.phone}</td>
-                <td>${c.email || '-'}</td>
+                <td style="font-weight:600; color:white;">${escapeHtml(c.name)}</td>
+                <td>${escapeHtml(c.phone)}</td>
+                <td>${escapeHtml(c.email || '-')}</td>
                 <td style="font-weight:bold;">${c.totalPurchases || 0}</td>
                 <td style="font-weight:bold; color:#10b981;">${formatCurrency(c.totalSpent || 0)}</td>
             </tr>
@@ -132,9 +132,9 @@ function renderReportView(report) {
 
         tableBody.innerHTML = (report.data || []).map(e => `
             <tr>
-                <td style="font-weight:600; color:white;">${e.name}</td>
-                <td>${e.designation || 'Staff'}</td>
-                <td><span class="badge ${e.role}">${e.role.toUpperCase()}</span></td>
+                <td style="font-weight:600; color:white;">${escapeHtml(e.name)}</td>
+                <td>${escapeHtml(e.designation || 'Staff')}</td>
+                <td><span class="badge ${escapeHtml(e.role)}">${escapeHtml(e.role.toUpperCase())}</span></td>
                 <td style="font-weight:bold;">${e.salesCount}</td>
                 <td style="font-weight:bold; color:#10b981;">${formatCurrency(e.totalRevenue)}</td>
             </tr>
@@ -166,14 +166,14 @@ function renderReportView(report) {
 
         tableBody.innerHTML = (report.data || []).map(s => `
             <tr>
-                <td style="font-weight:700; color:#8b5cf6;">${s.invoiceNumber}</td>
+                <td style="font-weight:700; color:#8b5cf6;">${escapeHtml(s.invoiceNumber)}</td>
                 <td style="color:#94a3b8;">${formatDate(s.createdAt)}</td>
-                <td style="font-weight:500;">${s.customerName}</td>
-                <td>${s.soldBy ? s.soldBy.name : 'Staff'}</td>
-                <td><span class="badge ${s.paymentMethod.toLowerCase()}">${s.paymentMethod}</span></td>
+                <td style="font-weight:500;">${escapeHtml(s.customerName)}</td>
+                <td>${escapeHtml(s.soldBy ? s.soldBy.name : 'Staff')}</td>
+                <td><span class="badge ${escapeHtml(s.paymentMethod.toLowerCase())}">${escapeHtml(s.paymentMethod)}</span></td>
                 <td>${formatCurrency(s.subtotal)}</td>
                 <td style="font-weight:bold; color:#10b981;">${formatCurrency(s.grandTotal)}</td>
-                <td><span class="status ${s.saleStatus === 'Completed' ? 'completed' : 'cancelled'}">${s.saleStatus}</span></td>
+                <td><span class="status ${s.saleStatus === 'Completed' ? 'completed' : 'cancelled'}">${escapeHtml(s.saleStatus)}</span></td>
             </tr>
         `).join('');
     }

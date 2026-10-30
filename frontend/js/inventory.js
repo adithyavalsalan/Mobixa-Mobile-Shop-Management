@@ -4,10 +4,13 @@
  */
 
 let inventoryList = [];
+let currentUser = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
-    const user = await requireAuth();
-    if (!user) return;
+    currentUser = await requireAuth();
+    if (!currentUser) return;
+    const adjustButton = document.querySelector('.btn-adjust');
+    if (adjustButton && currentUser.role !== 'admin') adjustButton.hidden = true;
 
     loadInventory();
 
@@ -68,7 +71,7 @@ function populateProductDropdowns() {
     const adjustSelect = document.getElementById('adjustProduct');
 
     const optionsHtml = '<option value="">-- Choose Product --</option>' +
-        inventoryList.map(p => `<option value="${p._id}">${p.name} (SKU: ${p.sku}) [Current: ${p.stock}]</option>`).join('');
+        inventoryList.map(p => `<option value="${escapeHtml(p._id)}">${escapeHtml(p.name)} (SKU: ${escapeHtml(p.sku)}) [Current: ${p.stock}]</option>`).join('');
 
     if (stockInSelect) stockInSelect.innerHTML = optionsHtml;
     if (adjustSelect) adjustSelect.innerHTML = optionsHtml;
@@ -124,18 +127,18 @@ function renderInventoryTable(products) {
         return `
             <tr>
                 <td>
-                    <div style="font-weight:600; color:white;">${p.name}</div>
-                    <small style="color:#94a3b8;">${p.brand} ${p.modelName ? '• ' + p.modelName : ''}</small>
+                    <div style="font-weight:600; color:white;">${escapeHtml(p.name)}</div>
+                    <small style="color:#94a3b8;">${escapeHtml(p.brand)} ${p.modelName ? '• ' + escapeHtml(p.modelName) : ''}</small>
                 </td>
-                <td style="font-family:monospace; color:#a5b4fc;">${p.sku}</td>
-                <td><span class="category-badge">${p.category}</span></td>
+                <td style="font-family:monospace; color:#a5b4fc;">${escapeHtml(p.sku)}</td>
+                <td><span class="category-badge">${escapeHtml(p.category)}</span></td>
                 <td style="${stockStyle}">${p.stock} units</td>
                 <td style="color:#94a3b8;">${p.minStockLevel}</td>
                 <td>${statusBadge}</td>
                 <td>
                     <div style="display:flex; gap:8px;">
-                        <button class="action-btn" onclick="openStockInForProduct('${p._id}')" title="Quick Stock In">📥 Add Stock</button>
-                        <button class="action-btn" onclick="openAdjustForProduct('${p._id}')" title="Adjust Stock">⚖️ Adjust</button>
+                        <button class="action-btn" onclick="openStockInForProduct('${escapeHtml(p._id)}')" title="Quick Stock In">📥 Add Stock</button>
+                        ${currentUser.role === 'admin' ? `<button class="action-btn" onclick="openAdjustForProduct('${escapeHtml(p._id)}')" title="Adjust Stock">⚖️ Adjust</button>` : ''}
                     </div>
                 </td>
             </tr>
@@ -275,7 +278,7 @@ async function viewMovementsHistory() {
             } else {
                 tbody.innerHTML = movements.map(m => {
                     const date = formatDate(m.createdAt);
-                    const prodName = m.product ? `${m.product.name} (${m.product.sku})` : 'Unknown Product';
+                    const prodName = m.product ? `${escapeHtml(m.product.name)} (${escapeHtml(m.product.sku)})` : 'Unknown Product';
                     const sign = m.quantity > 0 ? `+${m.quantity}` : `${m.quantity}`;
                     const deltaColor = m.quantity > 0 ? '#10b981' : '#ef4444';
 
@@ -283,10 +286,10 @@ async function viewMovementsHistory() {
                         <tr>
                             <td style="color:#94a3b8;">${date}</td>
                             <td style="font-weight:600; color:white;">${prodName}</td>
-                            <td><span class="badge ${m.type.toLowerCase()}">${m.type}</span></td>
+                            <td><span class="badge ${escapeHtml(m.type.toLowerCase())}">${escapeHtml(m.type)}</span></td>
                             <td style="color:${deltaColor}; font-weight:bold;">${sign}</td>
                             <td>${m.previousStock} → <strong>${m.newStock}</strong></td>
-                            <td style="color:#cbd5e1;"><small>${m.reason || '-'} ${m.reference ? '(' + m.reference + ')' : ''}</small></td>
+                            <td style="color:#cbd5e1;"><small>${escapeHtml(m.reason || '-')} ${m.reference ? `(${escapeHtml(m.reference)})` : ''}</small></td>
                         </tr>
                     `;
                 }).join('');

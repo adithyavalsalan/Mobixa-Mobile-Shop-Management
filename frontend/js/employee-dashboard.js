@@ -57,14 +57,14 @@ function renderEmployeeRecentSales(sales) {
     }
 
     tbody.innerHTML = sales.map(s => {
-        const items = (s.items || []).map(i => `${i.name} (x${i.quantity})`).join(', ');
+        const items = (s.items || []).map(i => `${escapeHtml(i.name)} (x${i.quantity})`).join(', ');
         return `
             <tr>
-                <td style="font-weight:600; color:#8b5cf6;">${s.invoiceNumber}</td>
-                <td>${s.customerName}</td>
+                <td style="font-weight:600; color:#8b5cf6;">${escapeHtml(s.invoiceNumber)}</td>
+                <td>${escapeHtml(s.customerName)}</td>
                 <td><small style="color:#94a3b8;">${items}</small></td>
                 <td style="font-weight:700;">${formatCurrency(s.grandTotal)}</td>
-                <td><span class="status ${s.saleStatus === 'Completed' ? 'completed' : 'cancelled'}">${s.saleStatus}</span></td>
+                <td><span class="status ${s.saleStatus === 'Completed' ? 'completed' : 'cancelled'}">${escapeHtml(s.saleStatus)}</span></td>
             </tr>
         `;
     }).join('');

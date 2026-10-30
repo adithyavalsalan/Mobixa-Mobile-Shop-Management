@@ -56,6 +56,7 @@ const createSale = async (req, res, next) => {
 
         // Process line items & validate against DB
         const processedItems = [];
+        const requestedByProduct = new Map();
         let subtotal = 0;
 
         // First pass: validate all items and stock
@@ -76,17 +77,19 @@ const createSale = async (req, res, next) => {
             }
 
             const qty = Number(item.quantity);
-            if (isNaN(qty) || qty <= 0) {
+            if (!Number.isInteger(qty) || qty <= 0) {
                 return res.status(400).json({
                     success: false,
-                    message: `Invalid quantity for ${product.name}`
+                    message: `Quantity for ${product.name} must be a positive whole number.`
                 });
             }
 
-            if (product.stock < qty) {
+            const requestedQuantity = (requestedByProduct.get(String(product._id)) || 0) + qty;
+            requestedByProduct.set(String(product._id), requestedQuantity);
+            if (product.stock < requestedQuantity) {
                 return res.status(400).json({
                     success: false,
-                    message: `Insufficient stock for '${product.name}'. Requested: ${qty}, Available: ${product.stock}`
+                    message: `Insufficient stock for '${product.name}'. Requested: ${requestedQuantity}, Available: ${product.stock}`
                 });
             }
 
@@ -107,7 +110,13 @@ const createSale = async (req, res, next) => {
             });
         }
 
-        const parsedDiscount = Math.max(0, Number(discount) || 0);
+        const parsedDiscount = Number(discount);
+        if (!Number.isFinite(parsedDiscount) || parsedDiscount < 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'Discount must be a non-negative number.'
+            });
+        }
         if (parsedDiscount > subtotal) {
             return res.status(400).json({
                 success: false,

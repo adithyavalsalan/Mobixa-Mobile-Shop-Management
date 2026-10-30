@@ -5,10 +5,11 @@
 
 let allCustomers = [];
 let currentEditingCustomerId = null;
+let currentUser = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
-    const user = await requireAuth();
-    if (!user) return;
+    currentUser = await requireAuth();
+    if (!currentUser) return;
 
     loadCustomers();
 
@@ -75,23 +76,23 @@ function renderCustomerTable(customers) {
                 <td>
                     <div style="display:flex; align-items:center; gap:10px;">
                         <div style="width:34px; height:34px; border-radius:50%; background:rgba(99,102,241,0.2); color:#818cf8; font-weight:bold; display:flex; align-items:center; justify-content:center; font-size:12px;">
-                            ${initials}
+                            ${escapeHtml(initials)}
                         </div>
                         <div>
-                            <div style="font-weight:600; color:white;">${c.name}</div>
-                            <small style="color:#94a3b8;">${c.email || 'No email'}</small>
+                            <div style="font-weight:600; color:white;">${escapeHtml(c.name)}</div>
+                            <small style="color:#94a3b8;">${escapeHtml(c.email || 'No email')}</small>
                         </div>
                     </div>
                 </td>
-                <td style="color:#a5b4fc; font-weight:500;">${c.phone}</td>
-                <td style="color:#cbd5e1;"><small>${c.address || '-'}</small></td>
+                <td style="color:#a5b4fc; font-weight:500;">${escapeHtml(c.phone)}</td>
+                <td style="color:#cbd5e1;"><small>${escapeHtml(c.address || '-')}</small></td>
                 <td style="font-weight:bold;">${c.totalPurchases || 0}</td>
                 <td style="font-weight:700; color:#10b981;">${formatCurrency(c.totalSpent || 0)}</td>
                 <td>
                     <div style="display:flex; gap:8px;">
-                        <button class="action-btn" onclick="openEditCustomerModal('${c._id}')" title="Edit Profile">✏️</button>
-                        <button class="action-btn" onclick="viewCustomerHistory('${c._id}')" title="Purchase History">🛍️ History</button>
-                        <button class="action-btn delete-btn" onclick="deleteCustomerById('${c._id}', '${c.name}')" title="Delete Profile">🗑️</button>
+                        <button class="action-btn" onclick="openEditCustomerModal('${escapeHtml(c._id)}')" title="Edit Profile">✏️</button>
+                        <button class="action-btn" onclick="viewCustomerHistory('${escapeHtml(c._id)}')" title="Purchase History">🛍️ History</button>
+                        ${currentUser.role === 'admin' ? `<button class="action-btn delete-btn" onclick="deleteCustomerById('${escapeHtml(c._id)}')" title="Delete Profile">🗑️</button>` : ''}
                     </div>
                 </td>
             </tr>
@@ -158,7 +159,9 @@ async function handleCustomerSubmit(e) {
     }
 }
 
-async function deleteCustomerById(id, name) {
+async function deleteCustomerById(id) {
+    const customer = allCustomers.find(item => item._id === id);
+    const name = customer ? customer.name : 'this customer';
     if (!confirm(`Are you sure you want to delete profile for '${name}'?`)) return;
 
     try {
@@ -197,15 +200,15 @@ async function viewCustomerHistory(id) {
                 list.innerHTML = history.map(s => `
                     <div style="background:#0b0f1d; padding:10px 14px; border-radius:8px; margin-bottom:8px; font-size:13px; display:flex; justify-content:space-between; align-items:center;">
                         <div>
-                            <span style="font-weight:700; color:#8b5cf6;">${s.invoiceNumber}</span>
+                            <span style="font-weight:700; color:#8b5cf6;">${escapeHtml(s.invoiceNumber)}</span>
                             <small style="color:#94a3b8; margin-left:8px;">${formatDate(s.createdAt)}</small>
                             <div style="color:#cbd5e1; font-size:12px; margin-top:2px;">
-                                ${(s.items || []).map(i => `${i.name} (x${i.quantity})`).join(', ')}
+                                ${(s.items || []).map(i => `${escapeHtml(i.name)} (x${i.quantity})`).join(', ')}
                             </div>
                         </div>
                         <div style="text-align:right;">
                             <div style="font-weight:bold; color:#10b981;">${formatCurrency(s.grandTotal)}</div>
-                            <span class="status ${s.saleStatus === 'Completed' ? 'completed' : 'cancelled'}" style="font-size:10px; padding:2px 6px;">${s.saleStatus}</span>
+                            <span class="status ${s.saleStatus === 'Completed' ? 'completed' : 'cancelled'}" style="font-size:10px; padding:2px 6px;">${escapeHtml(s.saleStatus)}</span>
                         </div>
                     </div>
                 `).join('');

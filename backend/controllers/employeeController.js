@@ -67,25 +67,29 @@ const getEmployeeById = async (req, res, next) => {
             return res.status(403).json({ success: false, message: 'Unauthorized to view other employee details.' });
         }
 
-        const sales = await Sale.find({ soldBy: employee._id, saleStatus: 'Completed' })
-            .sort({ createdAt: -1 })
-            .limit(20);
-
-        const totalSalesAmount = sales.reduce((sum, s) => sum + s.grandTotal, 0);
-
-        const recentAttendance = await Attendance.find({ employee: employee._id })
-            .sort({ date: -1 })
-            .limit(10);
+        const [totalSalesCount, salesTotal, recentSales, recentAttendance] = await Promise.all([
+            Sale.countDocuments({ soldBy: employee._id, saleStatus: 'Completed' }),
+            Sale.aggregate([
+                { $match: { soldBy: employee._id, saleStatus: 'Completed' } },
+                { $group: { _id: null, total: { $sum: '$grandTotal' } } }
+            ]),
+            Sale.find({ soldBy: employee._id })
+                .sort({ createdAt: -1 })
+                .limit(20),
+            Attendance.find({ employee: employee._id })
+                .sort({ date: -1 })
+                .limit(10)
+        ]);
 
         return res.json({
             success: true,
             data: {
                 employee,
                 stats: {
-                    totalSalesCount: sales.length,
-                    totalSalesAmount
+                    totalSalesCount,
+                    totalSalesAmount: salesTotal[0]?.total || 0
                 },
-                recentSales: sales,
+                recentSales,
                 recentAttendance
             }
         });

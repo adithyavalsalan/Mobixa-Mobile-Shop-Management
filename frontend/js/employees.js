@@ -103,24 +103,24 @@ function renderEmployeeTable(employees) {
                 <td>
                     <div style="display:flex; align-items:center; gap:10px;">
                         <div style="width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg, #6366f1, #8b5cf6); color:white; font-weight:bold; display:flex; align-items:center; justify-content:center; font-size:12px;">
-                            ${initials}
+                            ${escapeHtml(initials)}
                         </div>
                         <div>
-                            <div style="font-weight:600; color:white;">${emp.name}</div>
-                            <small style="color:#94a3b8;">${emp.designation || 'Staff'}</small>
+                            <div style="font-weight:600; color:white;">${escapeHtml(emp.name)}</div>
+                            <small style="color:#94a3b8;">${escapeHtml(emp.designation || 'Staff')}</small>
                         </div>
                     </div>
                 </td>
-                <td style="color:#cbd5e1;">${emp.email}</td>
-                <td style="color:#a5b4fc;">${emp.phone || '-'}</td>
+                <td style="color:#cbd5e1;">${escapeHtml(emp.email)}</td>
+                <td style="color:#a5b4fc;">${escapeHtml(emp.phone || '-')}</td>
                 <td>${roleBadge}</td>
                 <td>₹${Number(emp.salary || 0).toLocaleString()}</td>
                 <td>${statusBadge}</td>
                 <td>
                     <div style="display:flex; gap:8px;">
-                        <button class="action-btn" onclick="openEditEmployeeModal('${emp._id}')" title="Edit Employee">✏️</button>
-                        <button class="action-btn" onclick="viewEmployeePerformance('${emp._id}')" title="Sales & Performance">📈 View</button>
-                        <button class="action-btn delete-btn" onclick="deleteEmployeeById('${emp._id}', '${emp.name}')" title="Delete Account">🗑️</button>
+                        <button class="action-btn" onclick="openEditEmployeeModal('${escapeHtml(emp._id)}')" title="Edit Employee">✏️</button>
+                        <button class="action-btn" onclick="viewEmployeePerformance('${escapeHtml(emp._id)}')" title="Sales & Performance">📈 View</button>
+                        <button class="action-btn delete-btn" onclick="deleteEmployeeById('${escapeHtml(emp._id)}')" title="Delete Account">🗑️</button>
                     </div>
                 </td>
             </tr>
@@ -207,7 +207,9 @@ async function handleEmployeeSubmit(e) {
     }
 }
 
-async function deleteEmployeeById(id, name) {
+async function deleteEmployeeById(id) {
+    const employee = allEmployees.find(item => item._id === id);
+    const name = employee ? employee.name : 'this employee';
     if (!confirm(`Are you sure you want to remove '${name}'?`)) return;
 
     try {
@@ -249,8 +251,8 @@ async function viewEmployeePerformance(id) {
                 list.innerHTML = recentSales.map(s => `
                     <div style="background:#0b0f1d; padding:8px 12px; border-radius:8px; margin-bottom:6px; font-size:12px; display:flex; justify-content:space-between; align-items:center;">
                         <div>
-                            <span style="font-weight:bold; color:#8b5cf6;">${s.invoiceNumber}</span>
-                            <small style="color:#94a3b8; margin-left:6px;">${s.customerName}</small>
+                            <span style="font-weight:bold; color:#8b5cf6;">${escapeHtml(s.invoiceNumber)}</span>
+                            <small style="color:#94a3b8; margin-left:6px;">${escapeHtml(s.customerName)}</small>
                         </div>
                         <span style="font-weight:bold; color:#10b981;">${formatCurrency(s.grandTotal)}</span>
                     </div>

@@ -106,9 +106,41 @@ Mobixa/
 │   └── setup.js                  # In-memory database fixture setup
 ├── .env.example
 ├── .gitignore
+├── render.yaml
 ├── package.json
 └── README.md
 ```
+
+---
+
+## ☁️ Deploy to Render
+
+MOBIXA is a single Node.js web service: Render runs the Express API and serves the frontend from the same origin. MongoDB data must live in MongoDB Atlas; Render's local filesystem is not a database and may be ephemeral.
+
+### 1. Prepare MongoDB Atlas
+
+1. Create an Atlas database user and use a strong password.
+2. In Atlas **Network Access**, allow the outbound IP addresses shown for your Render service. Do not rely on your development computer's IP allowlist. Avoid `0.0.0.0/0` for a production database.
+3. Use an Atlas connection string whose default database is `mobixa`, and percent-encode reserved characters in the database password.
+
+### 2. Create the Render service
+
+1. Push this repository to GitHub and select **New → Blueprint** in Render. Connect the repository and deploy its `render.yaml`.
+2. When prompted, set `MONGO_URI` to the Atlas connection string, plus unique `ADMIN_PASSWORD` and `EMPLOYEE_PASSWORD` values of at least 12 characters. Render generates `JWT_SECRET`; keep it private.
+3. The Blueprint sets `NODE_ENV=production`, runs `npm ci` and `npm start`, and checks `/api/health`. Keep the health check green before initializing the database.
+
+### 3. Initialize the production database once
+
+The seed script creates initial settings, the admin and employee accounts, and demo catalog/customer records. Run `npm run seed` once against the new Atlas database using the Render Shell if it is available for your plan. Otherwise, run it from a trusted computer with the same production `MONGO_URI`, `JWT_SECRET`, `ADMIN_PASSWORD`, and `EMPLOYEE_PASSWORD` environment values. Do not run it against a database containing records you need to preserve.
+
+After seeding succeeds, remove `ADMIN_PASSWORD` and `EMPLOYEE_PASSWORD` from the Render service environment and save the real account credentials in a password manager. Do not put credentials in GitHub, source files, or deployment logs.
+
+### Deployment notes
+
+- The service binds to Render's `PORT`; do not set a fixed port in Render.
+- `/api/health` returns HTTP 503 when MongoDB is disconnected, so Render can detect an unhealthy database connection.
+- Free web services can spin down while idle. Use an appropriate paid plan for a shop that needs continuous availability.
+- Deployments are triggered by pushes to the connected branch. Review Render's build and runtime logs if a deploy fails.
 
 ---
 
@@ -312,9 +344,9 @@ npm.cmd run verify
 1. **`Cannot GET /login.html`**:
    - **Resolved**: Express static middleware is configured using absolute paths (`path.join(__dirname, '../frontend')`), ensuring frontend assets are served correctly regardless of the command working directory.
 2. **`Address already in use :::5000`**:
-   - Another process is using port 5000. Either change `PORT=5001` in `.env` or terminate the existing process in PowerShell:
+   - Another process may already be running MOBIXA. Check which process owns the port before deciding whether to stop it; otherwise set `PORT=5001` in `.env`:
      ```powershell
-     Stop-Process -Id (Get-NetTCPConnection -LocalPort 5000).OwningProcess -Force
+     Get-NetTCPConnection -LocalPort 5000 -State Listen | ForEach-Object { Get-Process -Id $_.OwningProcess }
      ```
 3. **MongoDB Connection Warning**:
    - For local MongoDB, ensure the service is running. For Atlas, check the `MONGO_URI` in `.env`, the database user's credentials, and that your current public IP is allowed in Atlas **Network Access**.

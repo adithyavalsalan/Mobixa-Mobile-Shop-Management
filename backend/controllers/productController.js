@@ -8,6 +8,8 @@ const Sale = require('../models/Sale');
 const getProducts = async (req, res, next) => {
     try {
         const { search, category, brand, stockStatus, status = 'active', sort = '-createdAt', page = 1, limit = 100 } = req.query;
+        const pageNumber = Math.max(1, Number.parseInt(page, 10) || 1);
+        const pageSize = Math.min(100, Math.max(1, Number.parseInt(limit, 10) || 100));
 
         const query = {};
 
@@ -54,9 +56,18 @@ const getProducts = async (req, res, next) => {
         const inStockCount = allProducts.filter(p => p.stock > p.minStockLevel).length;
         const totalInventoryValue = allProducts.reduce((sum, p) => sum + (p.purchaseCost * p.stock), 0);
 
+        const totalResults = products.length;
+        products = products.slice((pageNumber - 1) * pageSize, pageNumber * pageSize);
+
         return res.json({
             success: true,
             count: products.length,
+            pagination: {
+                page: pageNumber,
+                limit: pageSize,
+                totalResults,
+                totalPages: Math.ceil(totalResults / pageSize)
+            },
             summary: {
                 totalProducts,
                 inStockCount,
@@ -116,6 +127,12 @@ const createProduct = async (req, res, next) => {
         const parsedCost = Number(purchaseCost);
         const parsedPrice = Number(sellingPrice);
         const parsedMin = Number(minStockLevel) >= 0 ? Number(minStockLevel) : 5;
+        if (!Number.isInteger(parsedStock) || !Number.isInteger(parsedMin)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Stock and minimum stock level must be whole numbers.'
+            });
+        }
 
         // Process IMEI list if provided
         let processedImeis = [];

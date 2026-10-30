@@ -62,7 +62,7 @@ const stockIn = async (req, res, next) => {
         const { productId, quantity, reason, reference, imeis } = req.body;
 
         const qty = Number(quantity);
-        if (!productId || isNaN(qty) || qty <= 0) {
+        if (!productId || !Number.isInteger(qty) || qty <= 0) {
             return res.status(400).json({
                 success: false,
                 message: 'Valid Product ID and quantity greater than 0 are required.'
@@ -118,7 +118,7 @@ const adjustStock = async (req, res, next) => {
         const { productId, newQuantity, reason } = req.body;
 
         const targetQty = Number(newQuantity);
-        if (!productId || isNaN(targetQty) || targetQty < 0) {
+        if (!productId || !Number.isInteger(targetQty) || targetQty < 0) {
             return res.status(400).json({
                 success: false,
                 message: 'Valid Product ID and non-negative quantity are required.'
